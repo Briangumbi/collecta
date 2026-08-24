@@ -1,6 +1,6 @@
-import { Ionicons } from '@expo/vector-icons';
 import { Redirect, Tabs } from 'expo-router';
 
+import { TabBarIcon } from '@/components/tab-bar-icon';
 import { useAuth } from '@/contexts/auth-context';
 import { useTheme } from '@/hooks/use-theme';
 
@@ -22,23 +22,40 @@ export default function FreelancerLayout() {
     >
       <Tabs.Screen
         name="dashboard"
-        options={{ title: 'Dashboard', tabBarIcon: ({ color, size }) => <Ionicons name="home" size={size} color={color} /> }}
+        options={{
+          title: 'Dashboard',
+          tabBarIcon: ({ color, size, focused }) => <TabBarIcon name="home" size={size} color={color} focused={focused} />,
+        }}
       />
       <Tabs.Screen
         name="clients"
-        options={{ title: 'Clients', tabBarIcon: ({ color, size }) => <Ionicons name="people" size={size} color={color} /> }}
+        options={{
+          title: 'Clients',
+          tabBarIcon: ({ color, size, focused }) => <TabBarIcon name="people" size={size} color={color} focused={focused} />,
+        }}
       />
       <Tabs.Screen
         name="invoices"
-        options={{ title: 'Invoices', tabBarIcon: ({ color, size }) => <Ionicons name="receipt" size={size} color={color} /> }}
+        options={{
+          title: 'Invoices',
+          tabBarIcon: ({ color, size, focused }) => <TabBarIcon name="receipt" size={size} color={color} focused={focused} />,
+        }}
       />
       <Tabs.Screen
         name="projects"
-        options={{ title: 'Projects', tabBarIcon: ({ color, size }) => <Ionicons name="briefcase" size={size} color={color} /> }}
+        options={{
+          title: 'Projects',
+          tabBarIcon: ({ color, size, focused }) => <TabBarIcon name="briefcase" size={size} color={color} focused={focused} />,
+        }}
       />
       <Tabs.Screen
         name="settings"
-        options={{ title: 'Settings', tabBarIcon: ({ color, size }) => <Ionicons name="settings-sharp" size={size} color={color} /> }}
+        options={{
+          title: 'Settings',
+          tabBarIcon: ({ color, size, focused }) => (
+            <TabBarIcon name="settings-sharp" size={size} color={color} focused={focused} />
+          ),
+        }}
       />
     </Tabs>
   );

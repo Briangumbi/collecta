@@ -4,6 +4,7 @@ import { ActivityIndicator, Alert, ScrollView, StyleSheet, View } from 'react-na
 
 import { Avatar } from '@/components/avatar';
 import { Card } from '@/components/card';
+import { GlowBackground } from '@/components/glow-background';
 import { PrimaryButton } from '@/components/primary-button';
 import { InvoiceStatusBadge } from '@/components/status-badge';
 import { ThemedText } from '@/components/themed-text';
@@ -64,9 +65,10 @@ export default function InvoiceDetailScreen() {
 
   return (
     <ThemedView style={styles.flex}>
+      <GlowBackground width={480} height={280} cy="0%" r="60%" />
       <ScrollView contentContainerStyle={styles.content}>
         <View style={styles.amountBlock}>
-          <ThemedText type="title" style={styles.amount}>
+          <ThemedText type="hero" themeColor="primary" style={styles.amount}>
             {formatCurrency(Number(invoice.amount), invoice.currency)}
           </ThemedText>
           <InvoiceStatusBadge status={invoice.status} />
@@ -74,7 +76,7 @@ export default function InvoiceDetailScreen() {
 
         <Card style={styles.card}>
           <View style={styles.clientRow}>
-            <Avatar name={client.name} url={client.avatar_url} size={40} />
+            <Avatar name={client.name} size={40} />
             <View style={styles.clientText}>
               <ThemedText type="smallBold">{client.name}</ThemedText>
               <ThemedText type="small" themeColor="textSecondary">
@@ -125,12 +127,11 @@ const styles = StyleSheet.create({
   },
   amountBlock: {
     alignItems: 'center',
-    marginBottom: 24,
+    marginBottom: 28,
     gap: 10,
   },
   amount: {
-    fontSize: 40,
-    lineHeight: 46,
+    marginVertical: 2,
   },
   card: {
     marginBottom: 16,

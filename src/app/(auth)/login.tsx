@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { GlowBackground } from '@/components/glow-background';
 import { PrimaryButton } from '@/components/primary-button';
 import { TextField } from '@/components/text-field';
 import { ThemedText } from '@/components/themed-text';
@@ -38,9 +39,21 @@ export default function LoginScreen() {
   return (
     <ThemedView style={styles.flex}>
       <SafeAreaView style={styles.flex}>
+        <GlowBackground width={420} height={320} cx="30%" cy="0%" r="55%" />
         <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.flex}>
           <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-            <View style={[styles.mark, { backgroundColor: theme.primary }]}>
+            <View
+              style={[
+                styles.mark,
+                {
+                  backgroundColor: theme.primary,
+                  shadowColor: theme.primary,
+                  shadowOffset: { width: 0, height: 0 },
+                  shadowOpacity: 0.5,
+                  shadowRadius: 16,
+                },
+              ]}
+            >
               <ThemedText type="title" themeColor="primaryText" style={styles.markLetter}>
                 L
               </ThemedText>

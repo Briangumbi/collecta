@@ -3,10 +3,12 @@ import { useMemo, useState } from 'react';
 import { FlatList, Pressable, RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
 
 import { Avatar } from '@/components/avatar';
+import { Card } from '@/components/card';
 import { OfflineBanner } from '@/components/offline-banner';
 import { InvoiceStatusBadge } from '@/components/status-badge';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
+import { Radius } from '@/constants/theme';
 import { useAuth } from '@/contexts/auth-context';
 import { useCachedQuery } from '@/hooks/use-cached-query';
 import { useTheme } from '@/hooks/use-theme';
@@ -71,10 +73,21 @@ export default function InvoicesScreen() {
           ) : null
         }
         renderItem={({ item }) => <InvoiceRow invoice={item} onPress={() => router.push(`/(freelancer)/invoices/${item.id}`)} />}
-        ItemSeparatorComponent={() => <View style={[styles.separator, { backgroundColor: theme.border }]} />}
       />
 
-      <Pressable style={[styles.fab, { backgroundColor: theme.primary }]} onPress={() => router.push('/(freelancer)/invoices/new')}>
+      <Pressable
+        style={[
+          styles.fab,
+          {
+            backgroundColor: theme.primary,
+            shadowColor: theme.primary,
+            shadowOffset: { width: 0, height: 6 },
+            shadowOpacity: 0.4,
+            shadowRadius: 14,
+          },
+        ]}
+        onPress={() => router.push('/(freelancer)/invoices/new')}
+      >
         <ThemedText type="title" themeColor="primaryText" style={styles.fabPlus}>
           +
         </ThemedText>
@@ -85,18 +98,24 @@ export default function InvoicesScreen() {
 
 function InvoiceRow({ invoice, onPress }: { invoice: InvoiceWithClient; onPress: () => void }) {
   return (
-    <Pressable style={({ pressed }) => [styles.row, { opacity: pressed ? 0.7 : 1 }]} onPress={onPress}>
-      <Avatar name={invoice.client?.name ?? '—'} url={invoice.client?.avatar_url} size={40} />
-      <View style={styles.rowText}>
-        <ThemedText type="smallBold">{invoice.client?.name ?? 'Unknown client'}</ThemedText>
-        <ThemedText type="small" themeColor="textSecondary">
-          Due {formatDate(invoice.due_date)}
-        </ThemedText>
-      </View>
-      <View style={styles.rowEnd}>
-        <ThemedText type="smallBold">{formatCurrency(Number(invoice.amount), invoice.currency)}</ThemedText>
-        <InvoiceStatusBadge status={invoice.status} />
-      </View>
+    <Pressable onPress={onPress}>
+      {({ pressed }) => (
+        <Card style={[styles.card, { opacity: pressed ? 0.85 : 1 }]}>
+          <View style={styles.row}>
+            <Avatar name={invoice.client?.name ?? '—'} size={40} />
+            <View style={styles.rowText}>
+              <ThemedText type="smallBold">{invoice.client?.name ?? 'Unknown client'}</ThemedText>
+              <ThemedText type="small" themeColor="textSecondary">
+                Due {formatDate(invoice.due_date)}
+              </ThemedText>
+            </View>
+            <View style={styles.rowEnd}>
+              <ThemedText type="smallBold">{formatCurrency(Number(invoice.amount), invoice.currency)}</ThemedText>
+              <InvoiceStatusBadge status={invoice.status} />
+            </View>
+          </View>
+        </Card>
+      )}
     </Pressable>
   );
 }
@@ -114,18 +133,21 @@ const styles = StyleSheet.create({
   filterPill: {
     paddingHorizontal: 14,
     paddingVertical: 8,
-    borderRadius: 100,
+    borderRadius: Radius.pill,
     borderWidth: StyleSheet.hairlineWidth,
   },
   content: {
     paddingHorizontal: 20,
     paddingTop: 12,
     paddingBottom: 100,
+    gap: 12,
+  },
+  card: {
+    padding: 14,
   },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 14,
   },
   rowText: {
     flex: 1,
@@ -134,9 +156,6 @@ const styles = StyleSheet.create({
   rowEnd: {
     alignItems: 'flex-end',
     gap: 4,
-  },
-  separator: {
-    height: StyleSheet.hairlineWidth,
   },
   empty: {
     textAlign: 'center',
@@ -151,11 +170,7 @@ const styles = StyleSheet.create({
     borderRadius: 28,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 4,
+    elevation: 6,
   },
   fabPlus: {
     fontSize: 28,

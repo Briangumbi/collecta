@@ -40,7 +40,7 @@ export default function ClientSettingsScreen() {
     <ThemedView style={styles.flex}>
       <ScrollView contentContainerStyle={styles.content}>
         <View style={styles.header}>
-          <Avatar name={profile.name} url={profile.avatar_url} size={72} />
+          <Avatar name={profile.name} size={72} />
           <ThemedText type="small" themeColor="textSecondary" style={styles.email}>
             {profile.email}
           </ThemedText>

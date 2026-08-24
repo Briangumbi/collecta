@@ -1,6 +1,6 @@
-import { Ionicons } from '@expo/vector-icons';
 import { Redirect, Tabs } from 'expo-router';
 
+import { TabBarIcon } from '@/components/tab-bar-icon';
 import { useAuth } from '@/contexts/auth-context';
 import { useTheme } from '@/hooks/use-theme';
 
@@ -22,19 +22,35 @@ export default function ClientLayout() {
     >
       <Tabs.Screen
         name="home"
-        options={{ title: 'Home', tabBarIcon: ({ color, size }) => <Ionicons name="home" size={size} color={color} /> }}
+        options={{
+          title: 'Home',
+          tabBarIcon: ({ color, size, focused }) => <TabBarIcon name="home" size={size} color={color} focused={focused} />,
+        }}
       />
       <Tabs.Screen
         name="invoices"
-        options={{ title: 'Invoices', tabBarIcon: ({ color, size }) => <Ionicons name="receipt" size={size} color={color} /> }}
+        options={{
+          title: 'Invoices',
+          tabBarIcon: ({ color, size, focused }) => <TabBarIcon name="receipt" size={size} color={color} focused={focused} />,
+        }}
       />
       <Tabs.Screen
         name="messages"
-        options={{ title: 'Messages', tabBarIcon: ({ color, size }) => <Ionicons name="chatbubbles" size={size} color={color} /> }}
+        options={{
+          title: 'Messages',
+          tabBarIcon: ({ color, size, focused }) => (
+            <TabBarIcon name="chatbubbles" size={size} color={color} focused={focused} />
+          ),
+        }}
       />
       <Tabs.Screen
         name="settings"
-        options={{ title: 'Settings', tabBarIcon: ({ color, size }) => <Ionicons name="settings-sharp" size={size} color={color} /> }}
+        options={{
+          title: 'Settings',
+          tabBarIcon: ({ color, size, focused }) => (
+            <TabBarIcon name="settings-sharp" size={size} color={color} focused={focused} />
+          ),
+        }}
       />
     </Tabs>
   );

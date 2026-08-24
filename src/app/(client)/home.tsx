@@ -33,7 +33,7 @@ export default function ClientHomeScreen() {
                 {profile.name.split(' ')[0]}
               </ThemedText>
             </View>
-            <Avatar name={profile.name} url={profile.avatar_url} size={48} />
+            <Avatar name={profile.name} size={48} />
           </View>
 
           <OfflineBanner visible={isOffline} />

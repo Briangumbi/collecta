@@ -6,9 +6,15 @@
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 
-export function useTheme() {
-  const scheme = useColorScheme();
-  const theme = scheme === 'unspecified' ? 'light' : scheme;
+function resolveScheme(scheme: ReturnType<typeof useColorScheme>) {
+  return scheme === 'unspecified' ? 'light' : scheme;
+}
 
-  return Colors[theme];
+export function useTheme() {
+  return Colors[resolveScheme(useColorScheme())];
+}
+
+/** Resolved 'light' | 'dark' — for tokens (e.g. Glow) that live outside the Colors table. */
+export function useThemeScheme() {
+  return resolveScheme(useColorScheme());
 }

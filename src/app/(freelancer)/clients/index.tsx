@@ -2,19 +2,18 @@ import { router } from 'expo-router';
 import { FlatList, Pressable, RefreshControl, StyleSheet, View } from 'react-native';
 
 import { Avatar } from '@/components/avatar';
+import { Card } from '@/components/card';
 import { OfflineBanner } from '@/components/offline-banner';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { useAuth } from '@/contexts/auth-context';
 import { useCachedQuery } from '@/hooks/use-cached-query';
-import { useTheme } from '@/hooks/use-theme';
 import { formatCurrency } from '@/lib/format';
 import { getClients, type ClientSummary } from '@/lib/queries';
 
 export default function ClientsScreen() {
   const { profile } = useAuth();
   const freelancerId = profile?.id ?? '';
-  const theme = useTheme();
 
   const { data, isLoading, isOffline, refetch } = useCachedQuery(`clients:${freelancerId}`, () => getClients(freelancerId));
 
@@ -34,7 +33,6 @@ export default function ClientsScreen() {
           ) : null
         }
         renderItem={({ item }) => <ClientRow client={item} onPress={() => router.push(`/(freelancer)/clients/${item.id}`)} />}
-        ItemSeparatorComponent={() => <View style={[styles.separator, { backgroundColor: theme.border }]} />}
       />
     </ThemedView>
   );
@@ -42,22 +40,28 @@ export default function ClientsScreen() {
 
 function ClientRow({ client, onPress }: { client: ClientSummary; onPress: () => void }) {
   return (
-    <Pressable style={({ pressed }) => [styles.row, { opacity: pressed ? 0.7 : 1 }]} onPress={onPress}>
-      <Avatar name={client.name} url={client.avatar_url} size={44} />
-      <View style={styles.rowText}>
-        <ThemedText type="smallBold">{client.name}</ThemedText>
-        <ThemedText type="small" themeColor="textSecondary">
-          {client.activeProjectCount} active project{client.activeProjectCount === 1 ? '' : 's'}
-        </ThemedText>
-      </View>
-      {client.outstandingBalance > 0 ? (
-        <ThemedText type="smallBold" themeColor="warning">
-          {formatCurrency(client.outstandingBalance)}
-        </ThemedText>
-      ) : (
-        <ThemedText type="small" themeColor="textSecondary">
-          Paid up
-        </ThemedText>
+    <Pressable onPress={onPress}>
+      {({ pressed }) => (
+        <Card style={[styles.card, { opacity: pressed ? 0.85 : 1 }]}>
+          <View style={styles.row}>
+            <Avatar name={client.name} size={44} />
+            <View style={styles.rowText}>
+              <ThemedText type="smallBold">{client.name}</ThemedText>
+              <ThemedText type="small" themeColor="textSecondary">
+                {client.activeProjectCount} active project{client.activeProjectCount === 1 ? '' : 's'}
+              </ThemedText>
+            </View>
+            {client.outstandingBalance > 0 ? (
+              <ThemedText type="smallBold" themeColor="warning">
+                {formatCurrency(client.outstandingBalance)}
+              </ThemedText>
+            ) : (
+              <ThemedText type="small" themeColor="textSecondary">
+                Paid up
+              </ThemedText>
+            )}
+          </View>
+        </Card>
       )}
     </Pressable>
   );
@@ -67,19 +71,20 @@ const styles = StyleSheet.create({
   flex: { flex: 1 },
   content: {
     paddingHorizontal: 20,
+    paddingTop: 12,
     paddingBottom: 40,
+    gap: 12,
+  },
+  card: {
+    padding: 14,
   },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 14,
   },
   rowText: {
     flex: 1,
     marginLeft: 12,
-  },
-  separator: {
-    height: StyleSheet.hairlineWidth,
   },
   empty: {
     textAlign: 'center',

@@ -55,17 +55,12 @@ async function getOrCreateUser(email: string, password: string, name: string, ro
 async function main() {
   console.log('Seeding demo freelancer...');
   const freelancerId = await getOrCreateUser(DEMO_FREELANCER_EMAIL, DEMO_FREELANCER_PASSWORD, 'Alex Rivera', 'freelancer');
-  await admin.from('profiles').update({ avatar_url: `https://i.pravatar.cc/150?u=${freelancerId}` }).eq('id', freelancerId);
 
   console.log('Seeding clients...');
   const clientIds: Record<string, string> = {};
   for (const c of CLIENTS) {
     const id = await getOrCreateUser(c.email, DEMO_PASSWORD, c.company, 'client');
     clientIds[c.company] = id;
-    await admin
-      .from('profiles')
-      .update({ avatar_url: `https://i.pravatar.cc/150?u=${id}` })
-      .eq('id', id);
     await admin
       .from('freelancer_clients')
       .upsert({ freelancer_id: freelancerId, client_id: id }, { onConflict: 'freelancer_id,client_id' });

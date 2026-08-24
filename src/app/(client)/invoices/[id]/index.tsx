@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { ActivityIndicator, ScrollView, StyleSheet, View } from 'react-native';
 
 import { Card } from '@/components/card';
+import { GlowBackground } from '@/components/glow-background';
 import { PrimaryButton } from '@/components/primary-button';
 import { InvoiceStatusBadge } from '@/components/status-badge';
 import { ThemedText } from '@/components/themed-text';
@@ -34,9 +35,13 @@ export default function ClientInvoiceDetailScreen() {
 
   return (
     <ThemedView style={styles.flex}>
+      <GlowBackground width={480} height={320} cy="0%" r="60%" />
       <ScrollView contentContainerStyle={styles.content}>
         <View style={styles.amountBlock}>
-          <ThemedText type="title" style={styles.amount}>
+          <ThemedText type="label" themeColor="textSecondary">
+            Amount due
+          </ThemedText>
+          <ThemedText type="hero" themeColor="primary" style={styles.amount}>
             {formatCurrency(Number(invoice.amount), invoice.currency)}
           </ThemedText>
           <InvoiceStatusBadge status={invoice.status} />
@@ -83,12 +88,11 @@ const styles = StyleSheet.create({
   },
   amountBlock: {
     alignItems: 'center',
-    marginBottom: 24,
+    marginBottom: 28,
     gap: 10,
   },
   amount: {
-    fontSize: 40,
-    lineHeight: 46,
+    marginVertical: 2,
   },
   card: {
     marginBottom: 24,

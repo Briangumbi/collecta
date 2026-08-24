@@ -28,7 +28,7 @@ export function ClientPicker({
               { borderColor: selected ? theme.primary : theme.border, backgroundColor: selected ? theme.backgroundSelected : theme.backgroundElement },
             ]}
           >
-            <Avatar name={client.name} url={client.avatar_url} size={24} />
+            <Avatar name={client.name} size={24} />
             <ThemedText type="small" themeColor={selected ? 'primary' : 'text'} style={styles.chipLabel}>
               {client.name}
             </ThemedText>

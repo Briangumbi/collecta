@@ -4,6 +4,7 @@ import { useEffect } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withSpring, withTiming } from 'react-native-reanimated';
 
+import { GlowBackground } from '@/components/glow-background';
 import { PrimaryButton } from '@/components/primary-button';
 import { ThemedText } from '@/components/themed-text';
 import { springs } from '@/animations/easing';
@@ -27,8 +28,17 @@ export function PaymentSuccessOverlay({ amountLabel, onDone }: { amountLabel: st
 
   return (
     <View style={[StyleSheet.absoluteFill, styles.overlay, { backgroundColor: theme.background }]}>
-      <Animated.View style={[styles.circle, { backgroundColor: theme.successBg }, circleStyle]}>
-        <Ionicons name="checkmark" size={56} color={theme.success} />
+      <GlowBackground width={480} height={480} cy="42%" r="55%" />
+      <Animated.View
+        style={[
+          styles.glowRing,
+          { shadowColor: theme.primary, shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0.55, shadowRadius: 24 },
+          circleStyle,
+        ]}
+      >
+        <View style={[styles.circle, { backgroundColor: theme.successBg, borderColor: theme.border }]}>
+          <Ionicons name="checkmark" size={56} color={theme.success} />
+        </View>
       </Animated.View>
       <ThemedText type="title" style={styles.title}>
         Payment successful
@@ -50,13 +60,16 @@ const styles = StyleSheet.create({
     paddingHorizontal: 32,
     zIndex: 1500,
   },
+  glowRing: {
+    marginBottom: 24,
+  },
   circle: {
     width: 112,
     height: 112,
     borderRadius: 56,
+    borderWidth: StyleSheet.hairlineWidth,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 24,
   },
   title: {
     fontSize: 26,

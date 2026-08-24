@@ -1,6 +1,8 @@
 /**
- * Below are the colors that are used in the app. The colors are defined in the light and dark mode.
- * There are many other ways to style your app. For example, [Nativewind](https://www.nativewind.dev/), [Tamagui](https://tamagui.dev/), [unistyles](https://reactnativeunistyles.vercel.app), etc.
+ * Design tokens. Dark is the primary, designed-for palette (premium warm
+ * fintech aesthetic — true near-black, amber accent, layered depth); light
+ * is a complementary counterpart so the app stays coherent under system
+ * light mode, not an afterthought default.
  */
 
 import '@/global.css';
@@ -9,38 +11,38 @@ import { Platform } from 'react-native';
 
 export const Colors = {
   light: {
-    text: '#12141A',
-    background: '#F7F7F9',
+    text: '#1F1B16',
+    background: '#FBF8F3',
     backgroundElement: '#FFFFFF',
-    backgroundSelected: '#EDF1FB',
-    textSecondary: '#666B78',
-    border: '#E4E5EA',
-    primary: '#1D4ED8',
+    backgroundSelected: '#F5EDDF',
+    textSecondary: '#7A7168',
+    border: '#EAE3D6',
+    primary: '#C8862A',
     primaryText: '#FFFFFF',
-    success: '#0F9D58',
-    successBg: '#E7F6EC',
-    warning: '#B4770E',
-    warningBg: '#FBF0DC',
-    danger: '#D0342C',
-    dangerBg: '#FBE7E6',
-    neutralBg: '#EEEFF2',
+    success: '#5B7052',
+    successBg: '#E8EDE3',
+    warning: '#A85E1E',
+    warningBg: '#F5E7D4',
+    danger: '#B84632',
+    dangerBg: '#F6E2DC',
+    neutralBg: '#F1ECE2',
   },
   dark: {
-    text: '#F4F5F7',
-    background: '#0B0C0F',
-    backgroundElement: '#17181C',
-    backgroundSelected: '#1F2937',
-    textSecondary: '#9AA0AC',
-    border: '#26282E',
-    primary: '#4C82F7',
-    primaryText: '#0B0C0F',
-    success: '#3DD68C',
-    successBg: '#0F2A1D',
-    warning: '#E3A83B',
-    warningBg: '#2E230C',
-    danger: '#F0645C',
-    dangerBg: '#2E1412',
-    neutralBg: '#1C1D21',
+    text: '#F5F1EA',
+    background: '#0D0B09',
+    backgroundElement: '#1C1916',
+    backgroundSelected: '#262019',
+    textSecondary: '#9A9490',
+    border: '#FFFFFF14',
+    primary: '#F5B942',
+    primaryText: '#241A08',
+    success: '#8FA382',
+    successBg: '#1E2419',
+    warning: '#C9843F',
+    warningBg: '#2E220F',
+    danger: '#E2634A',
+    dangerBg: '#2B1712',
+    neutralBg: '#211D19',
   },
 } as const;
 
@@ -59,27 +61,31 @@ export const ProjectStatusColor = {
 
 export type ThemeColor = keyof typeof Colors.light & keyof typeof Colors.dark;
 
+// The radial glow's color + peak opacity aren't theme-color-table entries
+// (SVG gradient stops need a plain hex + a separate numeric opacity, not a
+// solid fill color), so they live alongside Colors rather than in it.
+export const Glow = {
+  light: { color: '#C8862A', opacity: 0.16 },
+  dark: { color: '#F5B942', opacity: 0.32 },
+} as const;
+
 export const Fonts = Platform.select({
   ios: {
-    /** iOS `UIFontDescriptorSystemDesignDefault` */
-    sans: 'system-ui',
-    /** iOS `UIFontDescriptorSystemDesignSerif` */
-    serif: 'ui-serif',
-    /** iOS `UIFontDescriptorSystemDesignRounded` */
-    rounded: 'ui-rounded',
-    /** iOS `UIFontDescriptorSystemDesignMonospaced` */
+    sans: 'Manrope_500Medium',
+    display: 'Manrope_800ExtraBold',
+    semibold: 'Manrope_600SemiBold',
     mono: 'ui-monospace',
   },
   default: {
-    sans: 'normal',
-    serif: 'serif',
-    rounded: 'normal',
+    sans: 'Manrope_500Medium',
+    display: 'Manrope_800ExtraBold',
+    semibold: 'Manrope_600SemiBold',
     mono: 'monospace',
   },
   web: {
-    sans: 'var(--font-display)',
-    serif: 'var(--font-serif)',
-    rounded: 'var(--font-rounded)',
+    sans: 'Manrope_500Medium, sans-serif',
+    display: 'Manrope_800ExtraBold, sans-serif',
+    semibold: 'Manrope_600SemiBold, sans-serif',
     mono: 'var(--font-mono)',
   },
 });
@@ -92,6 +98,11 @@ export const Spacing = {
   four: 24,
   five: 32,
   six: 64,
+} as const;
+
+export const Radius = {
+  card: 20,
+  pill: 999,
 } as const;
 
 export const BottomTabInset = Platform.select({ ios: 50, android: 80 }) ?? 0;

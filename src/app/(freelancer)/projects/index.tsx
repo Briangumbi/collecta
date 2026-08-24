@@ -3,6 +3,7 @@ import { useMemo } from 'react';
 import { Pressable, RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
 
 import { Avatar } from '@/components/avatar';
+import { Card } from '@/components/card';
 import { OfflineBanner } from '@/components/offline-banner';
 import { ProjectStatusBadge } from '@/components/status-badge';
 import { ThemedText } from '@/components/themed-text';
@@ -39,12 +40,12 @@ export default function ProjectsScreen() {
         {grouped.map((group) =>
           group.items.length === 0 ? null : (
             <View key={group.status} style={styles.group}>
-              <ThemedText type="smallBold" themeColor="textSecondary" style={styles.groupTitle}>
-                {group.label.toUpperCase()}
+              <ThemedText type="label" themeColor="textSecondary" style={styles.groupTitle}>
+                {group.label}
               </ThemedText>
               {group.items.map((project) => (
                 <Pressable key={project.id} onPress={() => router.push(`/(freelancer)/projects/${project.id}`)}>
-                  <View style={[styles.card, { backgroundColor: theme.backgroundElement, borderColor: theme.border }]}>
+                  <Card style={styles.card}>
                     <View style={styles.cardHeader}>
                       <ThemedText type="smallBold" style={styles.cardTitle}>
                         {project.title}
@@ -53,13 +54,13 @@ export default function ProjectsScreen() {
                     </View>
                     {project.client ? (
                       <View style={styles.cardFooter}>
-                        <Avatar name={project.client.name} url={project.client.avatar_url} size={22} />
+                        <Avatar name={project.client.name} size={22} />
                         <ThemedText type="small" themeColor="textSecondary" style={styles.cardClientName}>
                           {project.client.name}
                         </ThemedText>
                       </View>
                     ) : null}
-                  </View>
+                  </Card>
                 </Pressable>
               ))}
             </View>
@@ -73,7 +74,19 @@ export default function ProjectsScreen() {
         ) : null}
       </ScrollView>
 
-      <Pressable style={[styles.fab, { backgroundColor: theme.primary }]} onPress={() => router.push('/(freelancer)/projects/new')}>
+      <Pressable
+        style={[
+          styles.fab,
+          {
+            backgroundColor: theme.primary,
+            shadowColor: theme.primary,
+            shadowOffset: { width: 0, height: 6 },
+            shadowOpacity: 0.4,
+            shadowRadius: 14,
+          },
+        ]}
+        onPress={() => router.push('/(freelancer)/projects/new')}
+      >
         <ThemedText type="title" themeColor="primaryText" style={styles.fabPlus}>
           +
         </ThemedText>
@@ -93,13 +106,8 @@ const styles = StyleSheet.create({
   },
   groupTitle: {
     marginBottom: 10,
-    letterSpacing: 0.5,
-    fontSize: 12,
   },
   card: {
-    borderRadius: 14,
-    borderWidth: StyleSheet.hairlineWidth,
-    padding: 14,
     marginBottom: 10,
   },
   cardHeader: {
@@ -132,11 +140,7 @@ const styles = StyleSheet.create({
     borderRadius: 28,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 4,
+    elevation: 6,
   },
   fabPlus: {
     fontSize: 28,

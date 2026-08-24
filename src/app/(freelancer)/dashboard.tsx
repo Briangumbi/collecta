@@ -6,6 +6,7 @@ import { ActivityFeed } from '@/components/activity-feed';
 import { AnimatedCounter } from '@/components/animated-counter';
 import { Avatar } from '@/components/avatar';
 import { Card } from '@/components/card';
+import { GlowBackground } from '@/components/glow-background';
 import { OfflineBanner } from '@/components/offline-banner';
 import { PrimaryButton } from '@/components/primary-button';
 import { RevenueChart } from '@/components/revenue-chart';
@@ -30,55 +31,58 @@ export default function DashboardScreen() {
   return (
     <ThemedView style={styles.flex}>
       <SafeAreaView style={styles.flex} edges={['top']}>
+        <GlowBackground height={340} cy="6%" />
         <ScrollView
           contentContainerStyle={styles.content}
           refreshControl={<RefreshControl refreshing={isLoading} onRefresh={refetch} />}
         >
           <View style={styles.header}>
             <View>
-              <ThemedText type="small" themeColor="textSecondary">
+              <ThemedText type="label" themeColor="textSecondary">
                 Welcome back
               </ThemedText>
               <ThemedText type="title" style={styles.headerName}>
                 {profile.name.split(' ')[0]}
               </ThemedText>
             </View>
-            <Avatar name={profile.name} url={profile.avatar_url} size={48} />
+            <Avatar name={profile.name} size={48} />
           </View>
 
           <OfflineBanner visible={isOffline} />
 
-          <View style={styles.statsRow}>
-            <Card style={styles.statCard}>
-              <ThemedText type="small" themeColor="textSecondary">
-                Outstanding
-              </ThemedText>
-              <AnimatedCounter
-                value={data?.outstandingTotal ?? 0}
-                formatter={(n) => formatCurrency(n)}
-                type="subtitle"
-                style={styles.statValue}
-              />
-            </Card>
-            <Card style={styles.statCard}>
-              <ThemedText type="small" themeColor="textSecondary">
-                Active projects
-              </ThemedText>
-              <AnimatedCounter value={data?.activeProjectCount ?? 0} type="subtitle" style={styles.statValue} />
-            </Card>
-          </View>
-          <Card style={styles.wideStatCard}>
-            <ThemedText type="small" themeColor="textSecondary">
-              Paid this month
+          <Card style={styles.heroCard}>
+            <ThemedText type="label" themeColor="textSecondary">
+              Outstanding
             </ThemedText>
             <AnimatedCounter
-              value={data?.paidThisMonth ?? 0}
+              value={data?.outstandingTotal ?? 0}
               formatter={(n) => formatCurrency(n)}
-              type="subtitle"
-              style={styles.statValue}
-              themeColor="success"
+              type="hero"
+              themeColor="primary"
+              style={styles.heroValue}
             />
           </Card>
+
+          <View style={styles.statsRow}>
+            <Card style={styles.statCard}>
+              <ThemedText type="label" themeColor="textSecondary">
+                Active
+              </ThemedText>
+              <AnimatedCounter value={data?.activeProjectCount ?? 0} type="title" style={styles.statValue} />
+            </Card>
+            <Card style={styles.statCard}>
+              <ThemedText type="label" themeColor="textSecondary">
+                Paid this month
+              </ThemedText>
+              <AnimatedCounter
+                value={data?.paidThisMonth ?? 0}
+                formatter={(n) => formatCurrency(n)}
+                type="title"
+                style={styles.statValue}
+                themeColor="success"
+              />
+            </Card>
+          </View>
 
           <Card style={styles.chartCard}>
             <ThemedText type="smallBold" style={styles.sectionTitle}>
@@ -116,28 +120,33 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 20,
+    marginBottom: 24,
   },
   headerName: {
-    fontSize: 28,
-    lineHeight: 34,
+    fontSize: 30,
+    lineHeight: 36,
+    marginTop: 2,
+  },
+  heroCard: {
+    marginBottom: 12,
+    paddingVertical: 22,
+  },
+  heroValue: {
+    marginTop: 8,
   },
   statsRow: {
     flexDirection: 'row',
     gap: 12,
-    marginBottom: 12,
+    marginBottom: 20,
   },
   statCard: {
     flex: 1,
-  },
-  wideStatCard: {
-    marginBottom: 12,
   },
   statValue: {
     marginTop: 6,
   },
   chartCard: {
-    marginBottom: 24,
+    marginBottom: 28,
     alignItems: 'flex-start',
   },
   sectionTitle: {
@@ -146,7 +155,7 @@ const styles = StyleSheet.create({
   quickActions: {
     flexDirection: 'row',
     gap: 12,
-    marginBottom: 28,
+    marginBottom: 32,
   },
   quickActionButton: {
     flex: 1,

@@ -4,6 +4,7 @@ import { StyleSheet, View } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import { scheduleOnRN } from 'react-native-worklets';
 
+import { GlowBackground } from '@/components/glow-background';
 import { PrimaryButton } from '@/components/primary-button';
 import { ThemedText } from '@/components/themed-text';
 import { duration, easing } from '@/animations/easing';
@@ -76,8 +77,20 @@ export function LockScreen() {
       style={[styles.overlay, { backgroundColor: theme.background }, animatedStyle]}
       pointerEvents={phase === 'locked' ? 'auto' : 'none'}
     >
+      <GlowBackground width={420} height={420} cy="38%" r="55%" />
       <View style={styles.center}>
-        <View style={[styles.mark, { backgroundColor: theme.primary }]}>
+        <View
+          style={[
+            styles.mark,
+            {
+              backgroundColor: theme.primary,
+              shadowColor: theme.primary,
+              shadowOffset: { width: 0, height: 0 },
+              shadowOpacity: 0.5,
+              shadowRadius: 20,
+            },
+          ]}
+        >
           <ThemedText type="title" themeColor="primaryText" style={styles.markLetter}>
             L
           </ThemedText>

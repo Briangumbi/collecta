@@ -97,7 +97,7 @@ export default function ProjectDetailScreen() {
         <View style={styles.headerMeta}>
           <ProjectStatusBadge status={project.status} />
           <View style={styles.clientChip}>
-            <Avatar name={client.name} url={client.avatar_url} size={20} />
+            <Avatar name={client.name} size={20} />
             <ThemedText type="small" themeColor="textSecondary" style={styles.clientChipLabel}>
               {client.name}
             </ThemedText>

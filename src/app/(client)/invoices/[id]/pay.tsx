@@ -3,11 +3,13 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View } from 'react-native';
 
+import { GlowBackground } from '@/components/glow-background';
 import { PaymentSuccessOverlay } from '@/components/payment-success-overlay';
 import { PrimaryButton } from '@/components/primary-button';
 import { TextField } from '@/components/text-field';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
+import { VirtualCardPreview } from '@/components/virtual-card-preview';
 import { useSimulatedPayment } from '@/hooks/use-simulated-payment';
 import { useTheme } from '@/hooks/use-theme';
 import { formatCardNumber, formatExpiry, isCardNumberValid, isCvcValid, isExpiryValid } from '@/lib/card-format';
@@ -86,7 +88,7 @@ export default function PayInvoiceScreen() {
   if (phase === 'declined') {
     return (
       <ThemedView style={styles.center}>
-        <View style={[styles.declineIcon, { backgroundColor: theme.dangerBg }]}>
+        <View style={[styles.declineIcon, { backgroundColor: theme.dangerBg, borderColor: theme.border }]}>
           <Ionicons name="close" size={40} color={theme.danger} />
         </View>
         <ThemedText type="subtitle" style={styles.declineTitle}>
@@ -104,14 +106,17 @@ export default function PayInvoiceScreen() {
 
   return (
     <ThemedView style={styles.flex}>
+      <GlowBackground width={480} height={260} cy="-4%" r="55%" />
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.flex}>
         <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-          <ThemedText type="title" style={styles.amount}>
+          <ThemedText type="hero" themeColor="primary" style={styles.amount}>
             {formatCurrency(Number(invoice.amount), invoice.currency)}
           </ThemedText>
           <ThemedText type="small" themeColor="textSecondary" style={styles.subtitle}>
             Enter any card details — this is a simulated payment, no real card is charged.
           </ThemedText>
+
+          <VirtualCardPreview name={name} number={cardNumber} expiry={expiry} />
 
           <TextField label="Cardholder name" value={name} onChangeText={setName} placeholder="Jane Whitfield" autoCapitalize="words" />
           <TextField
@@ -169,14 +174,12 @@ const styles = StyleSheet.create({
     paddingBottom: 60,
   },
   amount: {
-    fontSize: 34,
-    lineHeight: 40,
     textAlign: 'center',
     marginBottom: 8,
   },
   subtitle: {
     textAlign: 'center',
-    marginBottom: 28,
+    marginBottom: 24,
   },
   row: {
     flexDirection: 'row',
@@ -196,6 +199,7 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 40,
+    borderWidth: StyleSheet.hairlineWidth,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 20,
