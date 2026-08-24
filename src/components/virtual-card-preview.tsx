@@ -16,7 +16,7 @@ export function VirtualCardPreview({ name, number, expiry }: { name: string; num
   return (
     <View style={styles.shadowWrap}>
       <LinearGradient
-        colors={isDark ? ['#242019', '#161310'] : ['#2A2013', '#171209']}
+        colors={isDark ? ['#242428', '#131315'] : ['#242428', '#131315']}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={styles.card}
@@ -24,7 +24,7 @@ export function VirtualCardPreview({ name, number, expiry }: { name: string; num
         <LinearGradient colors={['#FFFFFF1A', '#FFFFFF00']} style={styles.sheen} pointerEvents="none" />
         <View style={styles.topRow}>
           <View style={styles.chip} />
-          <Ionicons name="wifi" size={18} color="#F5F1EA99" style={styles.contactless} />
+          <Ionicons name="wifi" size={18} color="#F5F5F399" style={styles.contactless} />
         </View>
         <ThemedText style={styles.number}>{displayNumber}</ThemedText>
         <View style={styles.bottomRow}>
@@ -71,15 +71,15 @@ const styles = StyleSheet.create({
     width: 36,
     height: 26,
     borderRadius: 5,
-    backgroundColor: '#F5B94255',
+    backgroundColor: '#D4FF3D55',
     borderWidth: 1,
-    borderColor: '#F5B94288',
+    borderColor: '#D4FF3D88',
   },
   contactless: {
     transform: [{ rotate: '90deg' }],
   },
   number: {
-    color: '#F5F1EA',
+    color: '#F5F5F3',
     fontSize: 20,
     letterSpacing: 2,
     fontFamily: 'Manrope_600SemiBold',
@@ -90,7 +90,7 @@ const styles = StyleSheet.create({
     alignItems: 'flex-end',
   },
   name: {
-    color: '#F5F1EACC',
+    color: '#F5F5F3CC',
     fontSize: 13,
     letterSpacing: 1,
     fontFamily: 'Manrope_600SemiBold',
@@ -98,7 +98,7 @@ const styles = StyleSheet.create({
     marginRight: 12,
   },
   expiry: {
-    color: '#F5F1EACC',
+    color: '#F5F5F3CC',
     fontSize: 13,
     fontFamily: 'Manrope_600SemiBold',
   },

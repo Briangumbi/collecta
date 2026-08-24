@@ -1,8 +1,10 @@
 /**
- * Design tokens. Dark is the primary, designed-for palette (premium warm
- * fintech aesthetic — true near-black, amber accent, layered depth); light
- * is a complementary counterpart so the app stays coherent under system
- * light mode, not an afterthought default.
+ * Design tokens. Dark is the primary, designed-for palette — neutral true
+ * near-black (not warm-tinted; a cooler neutral reads cleaner against the
+ * electric-lime accent than a warm brown-black would) with a bold lime
+ * accent, layered card depth, and bold display type; light is a
+ * complementary counterpart so the app stays coherent under system light
+ * mode, not an afterthought default.
  */
 
 import '@/global.css';
@@ -11,13 +13,13 @@ import { Platform } from 'react-native';
 
 export const Colors = {
   light: {
-    text: '#1F1B16',
-    background: '#FBF8F3',
+    text: '#141414',
+    background: '#F7F7F5',
     backgroundElement: '#FFFFFF',
-    backgroundSelected: '#F5EDDF',
-    textSecondary: '#7A7168',
-    border: '#EAE3D6',
-    primary: '#C8862A',
+    backgroundSelected: '#EEF3DC',
+    textSecondary: '#6B6B70',
+    border: '#E4E4E2',
+    primary: '#7CB518',
     primaryText: '#FFFFFF',
     success: '#5B7052',
     successBg: '#E8EDE3',
@@ -25,24 +27,24 @@ export const Colors = {
     warningBg: '#F5E7D4',
     danger: '#B84632',
     dangerBg: '#F6E2DC',
-    neutralBg: '#F1ECE2',
+    neutralBg: '#EFEFEC',
   },
   dark: {
-    text: '#F5F1EA',
-    background: '#0D0B09',
-    backgroundElement: '#1C1916',
-    backgroundSelected: '#262019',
-    textSecondary: '#9A9490',
+    text: '#F5F5F3',
+    background: '#0A0A0B',
+    backgroundElement: '#18181B',
+    backgroundSelected: '#242428',
+    textSecondary: '#8E8E93',
     border: '#FFFFFF14',
-    primary: '#F5B942',
-    primaryText: '#241A08',
+    primary: '#D4FF3D',
+    primaryText: '#14170A',
     success: '#8FA382',
     successBg: '#1E2419',
-    warning: '#C9843F',
-    warningBg: '#2E220F',
+    warning: '#E3A83B',
+    warningBg: '#2E230C',
     danger: '#E2634A',
     dangerBg: '#2B1712',
-    neutralBg: '#211D19',
+    neutralBg: '#1E1E22',
   },
 } as const;
 
@@ -65,8 +67,8 @@ export type ThemeColor = keyof typeof Colors.light & keyof typeof Colors.dark;
 // (SVG gradient stops need a plain hex + a separate numeric opacity, not a
 // solid fill color), so they live alongside Colors rather than in it.
 export const Glow = {
-  light: { color: '#C8862A', opacity: 0.16 },
-  dark: { color: '#F5B942', opacity: 0.32 },
+  light: { color: '#7CB518', opacity: 0.14 },
+  dark: { color: '#D4FF3D', opacity: 0.22 },
 } as const;
 
 export const Fonts = Platform.select({

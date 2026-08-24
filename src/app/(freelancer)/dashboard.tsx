@@ -10,12 +10,13 @@ import { GlowBackground } from '@/components/glow-background';
 import { OfflineBanner } from '@/components/offline-banner';
 import { PrimaryButton } from '@/components/primary-button';
 import { RevenueChart } from '@/components/revenue-chart';
+import { StackedInvoiceDeck } from '@/components/stacked-invoice-deck';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { useAuth } from '@/contexts/auth-context';
 import { useCachedQuery } from '@/hooks/use-cached-query';
 import { formatCurrency } from '@/lib/format';
-import { getDashboardSummary } from '@/lib/queries';
+import { getDashboardSummary, getUpcomingInvoices } from '@/lib/queries';
 
 export default function DashboardScreen() {
   const { profile } = useAuth();
@@ -25,6 +26,7 @@ export default function DashboardScreen() {
     `dashboard-summary:${freelancerId}`,
     () => getDashboardSummary(freelancerId)
   );
+  const { data: upcomingInvoices } = useCachedQuery(`upcoming-invoices:${freelancerId}`, () => getUpcomingInvoices(freelancerId));
 
   if (!profile) return null;
 
@@ -84,6 +86,15 @@ export default function DashboardScreen() {
             </Card>
           </View>
 
+          {upcomingInvoices && upcomingInvoices.length > 0 ? (
+            <>
+              <ThemedText type="smallBold" style={styles.sectionTitle}>
+                Upcoming
+              </ThemedText>
+              <StackedInvoiceDeck invoices={upcomingInvoices} />
+            </>
+          ) : null}
+
           <Card style={styles.chartCard}>
             <ThemedText type="smallBold" style={styles.sectionTitle}>
               Revenue — last 6 months
@@ -114,7 +125,7 @@ const styles = StyleSheet.create({
   flex: { flex: 1 },
   content: {
     padding: 20,
-    paddingBottom: 40,
+    paddingBottom: 130,
   },
   header: {
     flexDirection: 'row',

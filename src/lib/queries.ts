@@ -149,6 +149,27 @@ export async function getInvoices(freelancerId: string): Promise<InvoiceWithClie
   return (invoices ?? []).map((inv) => ({ ...inv, client: byId.get(inv.client_id) ?? null }));
 }
 
+/** Top outstanding invoices, soonest due first — feeds the dashboard's stacked-card deck. */
+export async function getUpcomingInvoices(freelancerId: string, limit = 3): Promise<InvoiceWithClient[]> {
+  const { data: invoices, error } = await supabase
+    .from('invoices')
+    .select('*')
+    .eq('freelancer_id', freelancerId)
+    .in('status', ['sent', 'overdue'])
+    .order('due_date', { ascending: true })
+    .limit(limit);
+  if (error) throw error;
+
+  const clientIds = Array.from(new Set((invoices ?? []).map((i) => i.client_id)));
+  const { data: clients, error: clientsError } = clientIds.length
+    ? await supabase.from('profiles').select('id, name, avatar_url').in('id', clientIds)
+    : { data: [], error: null };
+  if (clientsError) throw clientsError;
+
+  const byId = new Map((clients ?? []).map((c) => [c.id, c]));
+  return (invoices ?? []).map((inv) => ({ ...inv, client: byId.get(inv.client_id) ?? null }));
+}
+
 export async function getInvoiceDetail(id: string) {
   const { data: invoice, error } = await supabase.from('invoices').select('*').eq('id', id).single();
   if (error) throw error;

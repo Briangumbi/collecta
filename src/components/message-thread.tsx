@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { FlatList, KeyboardAvoidingView, Platform, Pressable, StyleSheet, TextInput, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ThemedText } from '@/components/themed-text';
 import { getMessages, sendMessage } from '@/lib/queries';
@@ -9,6 +10,7 @@ import type { Message } from '@/types/database';
 
 export function MessageThread({ projectId, currentUserId }: { projectId: string; currentUserId: string }) {
   const theme = useTheme();
+  const insets = useSafeAreaInsets();
   const [messages, setMessages] = useState<Message[]>([]);
   const [draft, setDraft] = useState('');
   const [sending, setSending] = useState(false);
@@ -78,7 +80,7 @@ export function MessageThread({ projectId, currentUserId }: { projectId: string;
           </ThemedText>
         }
       />
-      <View style={[styles.inputRow, { borderTopColor: theme.border }]}>
+      <View style={[styles.inputRow, { borderTopColor: theme.border, paddingBottom: insets.bottom + 96 }]}>
         <MessageInput value={draft} onChangeText={setDraft} onSubmit={handleSend} sending={sending} />
       </View>
     </KeyboardAvoidingView>

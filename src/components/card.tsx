@@ -5,9 +5,9 @@ import { Radius } from '@/constants/theme';
 import { useTheme, useThemeScheme } from '@/hooks/use-theme';
 
 /**
- * Real elevation, not a flat bordered box: a warm-tinted drop shadow on the
+ * Real elevation, not a flat bordered box: a neutral drop shadow on the
  * outer wrapper (visible mainly in light mode — on near-black dark
- * backgrounds a black shadow reads as nothing, so depth there comes from the
+ * backgrounds a shadow reads as nothing, so depth there comes from the
  * lighter surface color instead) plus a faint top highlight for a glassy
  * edge. Two nested views because the shadow must NOT be clipped while the
  * highlight gradient must be clipped to the rounded corners — one view can't
@@ -26,7 +26,7 @@ export function Card({ style, children, ...rest }: ViewProps) {
       style={[
         styles.shadowWrap,
         {
-          shadowColor: isDark ? '#000000' : '#5C4322',
+          shadowColor: isDark ? '#000000' : '#3A3A3C',
           shadowOffset: { width: 0, height: 10 },
           shadowOpacity: 0.16,
           shadowRadius: 20,

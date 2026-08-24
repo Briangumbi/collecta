@@ -5,7 +5,7 @@ import { Glow } from '@/constants/theme';
 import { useThemeScheme } from '@/hooks/use-theme';
 
 /**
- * Soft amber radial glow, positioned behind a header/greeting or a hero
+ * Soft lime radial glow, positioned behind a header/greeting or a hero
  * amount. The single highest-impact move for killing the "flat" feeling —
  * meant to sit absolutely behind content, never to carry its own layout.
  */

@@ -101,7 +101,7 @@ const styles = StyleSheet.create({
   center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   content: {
     padding: 20,
-    paddingBottom: 40,
+    paddingBottom: 130,
   },
   header: {
     alignItems: 'center',

@@ -123,7 +123,7 @@ const styles = StyleSheet.create({
   center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   content: {
     padding: 20,
-    paddingBottom: 60,
+    paddingBottom: 140,
   },
   amountBlock: {
     alignItems: 'center',

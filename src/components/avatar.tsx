@@ -3,7 +3,7 @@ import { StyleSheet, View } from 'react-native';
 import { ThemedText } from '@/components/themed-text';
 import { useTheme } from '@/hooks/use-theme';
 
-/** Always an initials avatar, amber-on-charcoal — no fetched photo. */
+/** Always an initials avatar, lime-on-charcoal — no fetched photo. */
 export function Avatar({ name, size = 40 }: { name: string; size?: number }) {
   const theme = useTheme();
   const initials = name

@@ -70,7 +70,7 @@ const styles = StyleSheet.create({
   flex: { flex: 1 },
   content: {
     padding: 20,
-    paddingBottom: 40,
+    paddingBottom: 130,
   },
   header: {
     flexDirection: 'row',

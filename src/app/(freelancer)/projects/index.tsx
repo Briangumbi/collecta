@@ -99,7 +99,7 @@ const styles = StyleSheet.create({
   flex: { flex: 1 },
   content: {
     padding: 20,
-    paddingBottom: 100,
+    paddingBottom: 160,
   },
   group: {
     marginBottom: 20,
@@ -134,7 +134,7 @@ const styles = StyleSheet.create({
   fab: {
     position: 'absolute',
     right: 20,
-    bottom: 24,
+    bottom: 104,
     width: 56,
     height: 56,
     borderRadius: 28,
