@@ -1,0 +1,297 @@
+import { supabase } from '@/lib/supabase';
+import type { ActivityEvent, Attachment, Invoice, Message, Milestone, Profile, Project, Subscription } from '@/types/database';
+
+// ---------------------------------------------------------------------------
+// Freelancer — dashboard
+// ---------------------------------------------------------------------------
+
+export interface DashboardSummary {
+  outstandingTotal: number;
+  activeProjectCount: number;
+  paidThisMonth: number;
+  revenueByMonth: { month: string; total: number }[];
+}
+
+export async function getDashboardSummary(freelancerId: string): Promise<DashboardSummary> {
+  const { data: invoices, error: invoicesError } = await supabase
+    .from('invoices')
+    .select('amount, status, paid_at')
+    .eq('freelancer_id', freelancerId);
+  if (invoicesError) throw invoicesError;
+
+  const { count: activeProjectCount, error: projectsError } = await supabase
+    .from('projects')
+    .select('id', { count: 'exact', head: true })
+    .eq('freelancer_id', freelancerId)
+    .eq('status', 'active');
+  if (projectsError) throw projectsError;
+
+  const now = new Date();
+  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+
+  let outstandingTotal = 0;
+  let paidThisMonth = 0;
+  const monthTotals = new Map<string, number>();
+
+  for (const inv of invoices ?? []) {
+    if (inv.status === 'sent' || inv.status === 'overdue') {
+      outstandingTotal += Number(inv.amount);
+    }
+    if (inv.status === 'paid' && inv.paid_at) {
+      const paidDate = new Date(inv.paid_at);
+      if (paidDate >= startOfMonth) paidThisMonth += Number(inv.amount);
+
+      const key = `${paidDate.getFullYear()}-${paidDate.getMonth()}`;
+      monthTotals.set(key, (monthTotals.get(key) ?? 0) + Number(inv.amount));
+    }
+  }
+
+  const revenueByMonth = Array.from({ length: 6 }).map((_, i) => {
+    const d = new Date(now.getFullYear(), now.getMonth() - (5 - i), 1);
+    const key = `${d.getFullYear()}-${d.getMonth()}`;
+    return { month: d.toLocaleDateString('en-US', { month: 'short' }), total: monthTotals.get(key) ?? 0 };
+  });
+
+  return {
+    outstandingTotal,
+    activeProjectCount: activeProjectCount ?? 0,
+    paidThisMonth,
+    revenueByMonth,
+  };
+}
+
+export async function getActivityFeed(freelancerId: string, limit = 20): Promise<ActivityEvent[]> {
+  const { data, error } = await supabase
+    .from('activity_events')
+    .select('*')
+    .eq('freelancer_id', freelancerId)
+    .order('created_at', { ascending: false })
+    .limit(limit);
+  if (error) throw error;
+  return data ?? [];
+}
+
+// ---------------------------------------------------------------------------
+// Freelancer — clients
+// ---------------------------------------------------------------------------
+
+export interface ClientSummary extends Profile {
+  activeProjectCount: number;
+  outstandingBalance: number;
+}
+
+export async function getClients(freelancerId: string): Promise<ClientSummary[]> {
+  const { data: links, error: linksError } = await supabase
+    .from('freelancer_clients')
+    .select('client_id')
+    .eq('freelancer_id', freelancerId);
+  if (linksError) throw linksError;
+
+  const clientIds = (links ?? []).map((l) => l.client_id);
+  if (clientIds.length === 0) return [];
+
+  const [{ data: profiles, error: profilesError }, { data: projects, error: projectsError }, { data: invoices, error: invoicesError }] =
+    await Promise.all([
+      supabase.from('profiles').select('*').in('id', clientIds),
+      supabase.from('projects').select('client_id, status').eq('freelancer_id', freelancerId),
+      supabase.from('invoices').select('client_id, amount, status').eq('freelancer_id', freelancerId),
+    ]);
+  if (profilesError) throw profilesError;
+  if (projectsError) throw projectsError;
+  if (invoicesError) throw invoicesError;
+
+  return (profiles ?? []).map((profile) => {
+    const activeProjectCount = (projects ?? []).filter((p) => p.client_id === profile.id && p.status === 'active').length;
+    const outstandingBalance = (invoices ?? [])
+      .filter((inv) => inv.client_id === profile.id && (inv.status === 'sent' || inv.status === 'overdue'))
+      .reduce((sum, inv) => sum + Number(inv.amount), 0);
+    return { ...profile, activeProjectCount, outstandingBalance } as ClientSummary;
+  });
+}
+
+export async function getClientDetail(clientId: string) {
+  const [{ data: profile, error: profileError }, { data: projects, error: projectsError }, { data: invoices, error: invoicesError }] =
+    await Promise.all([
+      supabase.from('profiles').select('*').eq('id', clientId).single(),
+      supabase.from('projects').select('*').eq('client_id', clientId).order('created_at', { ascending: false }),
+      supabase.from('invoices').select('*').eq('client_id', clientId).order('created_at', { ascending: false }),
+    ]);
+  if (profileError) throw profileError;
+  if (projectsError) throw projectsError;
+  if (invoicesError) throw invoicesError;
+
+  return { profile: profile as Profile, projects: (projects ?? []) as Project[], invoices: (invoices ?? []) as Invoice[] };
+}
+
+// ---------------------------------------------------------------------------
+// Freelancer — invoices
+// ---------------------------------------------------------------------------
+
+export interface InvoiceWithClient extends Invoice {
+  client: Pick<Profile, 'id' | 'name' | 'avatar_url'> | null;
+}
+
+export async function getInvoices(freelancerId: string): Promise<InvoiceWithClient[]> {
+  const { data: invoices, error } = await supabase
+    .from('invoices')
+    .select('*')
+    .eq('freelancer_id', freelancerId)
+    .order('created_at', { ascending: false });
+  if (error) throw error;
+
+  const clientIds = Array.from(new Set((invoices ?? []).map((i) => i.client_id)));
+  const { data: clients, error: clientsError } = clientIds.length
+    ? await supabase.from('profiles').select('id, name, avatar_url').in('id', clientIds)
+    : { data: [], error: null };
+  if (clientsError) throw clientsError;
+
+  const byId = new Map((clients ?? []).map((c) => [c.id, c]));
+  return (invoices ?? []).map((inv) => ({ ...inv, client: byId.get(inv.client_id) ?? null }));
+}
+
+export async function getInvoiceDetail(id: string) {
+  const { data: invoice, error } = await supabase.from('invoices').select('*').eq('id', id).single();
+  if (error) throw error;
+
+  const { data: client, error: clientError } = await supabase.from('profiles').select('*').eq('id', invoice.client_id).single();
+  if (clientError) throw clientError;
+
+  return { invoice: invoice as Invoice, client: client as Profile };
+}
+
+export async function createInvoice(input: {
+  freelancerId: string;
+  clientId: string;
+  projectId: string | null;
+  amount: number;
+  dueDate: string | null;
+  status: 'draft' | 'sent';
+}) {
+  const { error } = await supabase.from('invoices').insert({
+    freelancer_id: input.freelancerId,
+    client_id: input.clientId,
+    project_id: input.projectId,
+    amount: input.amount,
+    due_date: input.dueDate,
+    status: input.status,
+  });
+  if (error) throw error;
+}
+
+export async function markInvoicePaidManually(id: string) {
+  const { error } = await supabase.from('invoices').update({ status: 'paid', paid_at: new Date().toISOString() }).eq('id', id);
+  if (error) throw error;
+}
+
+export async function markInvoiceSent(id: string) {
+  const { error } = await supabase.from('invoices').update({ status: 'sent' }).eq('id', id);
+  if (error) throw error;
+}
+
+// ---------------------------------------------------------------------------
+// Freelancer — projects
+// ---------------------------------------------------------------------------
+
+export interface ProjectWithClient extends Project {
+  client: Pick<Profile, 'id' | 'name' | 'avatar_url'> | null;
+}
+
+export async function getProjects(freelancerId: string): Promise<ProjectWithClient[]> {
+  const { data: projects, error } = await supabase
+    .from('projects')
+    .select('*')
+    .eq('freelancer_id', freelancerId)
+    .order('created_at', { ascending: false });
+  if (error) throw error;
+
+  const clientIds = Array.from(new Set((projects ?? []).map((p) => p.client_id)));
+  const { data: clients, error: clientsError } = clientIds.length
+    ? await supabase.from('profiles').select('id, name, avatar_url').in('id', clientIds)
+    : { data: [], error: null };
+  if (clientsError) throw clientsError;
+
+  const byId = new Map((clients ?? []).map((c) => [c.id, c]));
+  return (projects ?? []).map((p) => ({ ...p, client: byId.get(p.client_id) ?? null }));
+}
+
+export async function createProject(input: { freelancerId: string; clientId: string; title: string }) {
+  const { error } = await supabase
+    .from('projects')
+    .insert({ freelancer_id: input.freelancerId, client_id: input.clientId, title: input.title, status: 'active' });
+  if (error) throw error;
+}
+
+export async function getProjectDetail(id: string) {
+  const [{ data: project, error }, { data: milestones, error: milestonesError }, { data: attachments, error: attachmentsError }] =
+    await Promise.all([
+      supabase.from('projects').select('*').eq('id', id).single(),
+      supabase.from('milestones').select('*').eq('project_id', id).order('due_date', { ascending: true }),
+      supabase.from('attachments').select('*').eq('project_id', id).order('created_at', { ascending: false }),
+    ]);
+  if (error) throw error;
+  if (milestonesError) throw milestonesError;
+  if (attachmentsError) throw attachmentsError;
+
+  const { data: client, error: clientError } = await supabase.from('profiles').select('*').eq('id', project.client_id).single();
+  if (clientError) throw clientError;
+
+  return {
+    project: project as Project,
+    client: client as Profile,
+    milestones: (milestones ?? []) as Milestone[],
+    attachments: (attachments ?? []) as Attachment[],
+  };
+}
+
+export async function toggleMilestone(id: string, status: 'pending' | 'complete') {
+  const { error } = await supabase.from('milestones').update({ status }).eq('id', id);
+  if (error) throw error;
+}
+
+export async function addAttachment(input: { projectId: string; uploadedBy: string; fileUrl: string; type: 'deliverable' | 'receipt' }) {
+  const { error } = await supabase
+    .from('attachments')
+    .insert({ project_id: input.projectId, uploaded_by: input.uploadedBy, file_url: input.fileUrl, type: input.type });
+  if (error) throw error;
+}
+
+// ---------------------------------------------------------------------------
+// Messages (shared between freelancer + client views)
+// ---------------------------------------------------------------------------
+
+export async function getMessages(projectId: string): Promise<Message[]> {
+  const { data, error } = await supabase.from('messages').select('*').eq('project_id', projectId).order('created_at', { ascending: true });
+  if (error) throw error;
+  return data ?? [];
+}
+
+export async function sendMessage(input: { projectId: string; senderId: string; body: string }) {
+  const { error } = await supabase.from('messages').insert({ project_id: input.projectId, sender_id: input.senderId, body: input.body });
+  if (error) throw error;
+}
+
+// ---------------------------------------------------------------------------
+// Subscription
+// ---------------------------------------------------------------------------
+
+export async function getSubscription(freelancerId: string): Promise<Subscription | null> {
+  const { data, error } = await supabase.from('subscriptions').select('*').eq('freelancer_id', freelancerId).maybeSingle();
+  if (error) throw error;
+  return data;
+}
+
+// ---------------------------------------------------------------------------
+// Client-scoped
+// ---------------------------------------------------------------------------
+
+export async function getClientProjects(clientId: string): Promise<ProjectWithClient[]> {
+  const { data, error } = await supabase.from('projects').select('*').eq('client_id', clientId).order('created_at', { ascending: false });
+  if (error) throw error;
+  return (data ?? []).map((p) => ({ ...p, client: null }));
+}
+
+export async function getClientInvoices(clientId: string): Promise<Invoice[]> {
+  const { data, error } = await supabase.from('invoices').select('*').eq('client_id', clientId).order('created_at', { ascending: false });
+  if (error) throw error;
+  return data ?? [];
+}
