@@ -139,6 +139,33 @@ export async function getClients(freelancerId: string): Promise<ClientSummary[]>
   });
 }
 
+export interface CreateClientResult {
+  success: boolean;
+  clientId: string;
+  isNewAccount: boolean;
+  tempPassword: string | null;
+}
+
+/** Provisions (or links an existing) client account — see supabase/functions/create-client. */
+export async function createClientAccount(name: string, email: string): Promise<CreateClientResult> {
+  const { data, error } = await supabase.functions.invoke<CreateClientResult>('create-client', {
+    body: { name, email },
+  });
+  if (error) {
+    // FunctionsHttpError carries the raw Response on `.context` — the function
+    // always returns a JSON { error } body even on 4xx/5xx, so surface that
+    // instead of the generic "non-2xx status code" message.
+    const context = (error as { context?: Response }).context;
+    if (context) {
+      const body = await context.json().catch(() => null);
+      if (body?.error) throw new Error(body.error);
+    }
+    throw error;
+  }
+  if (!data) throw new Error('No response from server.');
+  return data;
+}
+
 export async function getClientDetail(clientId: string) {
   const [{ data: profile, error: profileError }, { data: projects, error: projectsError }, { data: invoices, error: invoicesError }] =
     await Promise.all([
@@ -162,16 +189,10 @@ export interface InvoiceWithClient extends Invoice {
   project?: Pick<Project, 'id' | 'title'> | null;
 }
 
-export async function getInvoices(freelancerId: string): Promise<InvoiceWithClient[]> {
-  const { data: invoices, error } = await supabase
-    .from('invoices')
-    .select('*')
-    .eq('freelancer_id', freelancerId)
-    .order('created_at', { ascending: false });
-  if (error) throw error;
-
-  const clientIds = Array.from(new Set((invoices ?? []).map((i) => i.client_id)));
-  const projectIds = Array.from(new Set((invoices ?? []).map((i) => i.project_id).filter((id): id is string => id !== null)));
+/** Joins client + project info onto a batch of invoice rows — shared by every invoice list query below. */
+async function attachClientsAndProjects(invoices: Invoice[]): Promise<InvoiceWithClient[]> {
+  const clientIds = Array.from(new Set(invoices.map((i) => i.client_id)));
+  const projectIds = Array.from(new Set(invoices.map((i) => i.project_id).filter((id): id is string => id !== null)));
   const [{ data: clients, error: clientsError }, { data: projects, error: projectsError }] = await Promise.all([
     clientIds.length ? supabase.from('profiles').select('id, name, avatar_url').in('id', clientIds) : Promise.resolve({ data: [], error: null }),
     projectIds.length ? supabase.from('projects').select('id, title').in('id', projectIds) : Promise.resolve({ data: [], error: null }),
@@ -181,11 +202,21 @@ export async function getInvoices(freelancerId: string): Promise<InvoiceWithClie
 
   const clientById = new Map((clients ?? []).map((c) => [c.id, c]));
   const projectById = new Map((projects ?? []).map((p) => [p.id, p]));
-  return (invoices ?? []).map((inv) => ({
+  return invoices.map((inv) => ({
     ...inv,
     client: clientById.get(inv.client_id) ?? null,
     project: inv.project_id ? (projectById.get(inv.project_id) ?? null) : null,
   }));
+}
+
+export async function getInvoices(freelancerId: string): Promise<InvoiceWithClient[]> {
+  const { data: invoices, error } = await supabase
+    .from('invoices')
+    .select('*')
+    .eq('freelancer_id', freelancerId)
+    .order('created_at', { ascending: false });
+  if (error) throw error;
+  return attachClientsAndProjects(invoices ?? []);
 }
 
 /** Top outstanding invoices, soonest due first — feeds the dashboard's client-balance carousel and invoice rows. */
@@ -198,23 +229,19 @@ export async function getUpcomingInvoices(freelancerId: string, limit = 3): Prom
     .order('due_date', { ascending: true })
     .limit(limit);
   if (error) throw error;
+  return attachClientsAndProjects(invoices ?? []);
+}
 
-  const clientIds = Array.from(new Set((invoices ?? []).map((i) => i.client_id)));
-  const projectIds = Array.from(new Set((invoices ?? []).map((i) => i.project_id).filter((id): id is string => id !== null)));
-  const [{ data: clients, error: clientsError }, { data: projects, error: projectsError }] = await Promise.all([
-    clientIds.length ? supabase.from('profiles').select('id, name, avatar_url').in('id', clientIds) : Promise.resolve({ data: [], error: null }),
-    projectIds.length ? supabase.from('projects').select('id, title').in('id', projectIds) : Promise.resolve({ data: [], error: null }),
-  ]);
-  if (clientsError) throw clientsError;
-  if (projectsError) throw projectsError;
-
-  const clientById = new Map((clients ?? []).map((c) => [c.id, c]));
-  const projectById = new Map((projects ?? []).map((p) => [p.id, p]));
-  return (invoices ?? []).map((inv) => ({
-    ...inv,
-    client: clientById.get(inv.client_id) ?? null,
-    project: inv.project_id ? (projectById.get(inv.project_id) ?? null) : null,
-  }));
+/** Every overdue invoice, unpaginated — feeds "Send Payment Reminders". */
+export async function getOverdueInvoices(freelancerId: string): Promise<InvoiceWithClient[]> {
+  const { data: invoices, error } = await supabase
+    .from('invoices')
+    .select('*')
+    .eq('freelancer_id', freelancerId)
+    .eq('status', 'overdue')
+    .order('due_date', { ascending: true });
+  if (error) throw error;
+  return attachClientsAndProjects(invoices ?? []);
 }
 
 export async function getInvoiceDetail(id: string) {

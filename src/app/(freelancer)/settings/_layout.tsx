@@ -2,7 +2,7 @@ import { Stack } from 'expo-router';
 
 import { useTheme } from '@/hooks/use-theme';
 
-export default function ClientsStackLayout() {
+export default function SettingsStackLayout() {
   const theme = useTheme();
   return (
     <Stack
@@ -13,8 +13,8 @@ export default function ClientsStackLayout() {
       }}
     >
       <Stack.Screen name="index" options={{ headerShown: false }} />
-      <Stack.Screen name="new" options={{ title: 'Add Client', presentation: 'modal' }} />
-      <Stack.Screen name="[id]" options={{ headerShown: false }} />
+      <Stack.Screen name="email-password" options={{ title: 'Email & Password' }} />
+      <Stack.Screen name="privacy-data" options={{ title: 'Privacy & Data' }} />
     </Stack>
   );
 }

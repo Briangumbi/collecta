@@ -23,7 +23,8 @@ import { useTheme } from '@/hooks/use-theme';
 import { useThemeTokens } from '@/theme/ThemeProvider';
 import type { ShadowPreset } from '@/theme/tokens';
 import { daysUntil, formatCurrency } from '@/lib/format';
-import { getDashboardSummary, getUpcomingInvoices } from '@/lib/queries';
+import { getDashboardSummary, getOverdueInvoices, getUpcomingInvoices } from '@/lib/queries';
+import { sendPaymentReminders, summarizeReminderResults } from '@/lib/reminders';
 
 // Decorative gradient stop for the header avatar only — not a theme token,
 // matching the "always this specific look" treatment used elsewhere (e.g.
@@ -35,6 +36,9 @@ export default function DashboardScreen() {
   const theme = useTheme();
   const { radius, fonts, fontSize, cardShadow } = useThemeTokens();
   const [showSearch, setShowSearch] = useState(false);
+  const [query, setQuery] = useState('');
+  const [overdueOnly, setOverdueOnly] = useState(false);
+  const [sendingReminders, setSendingReminders] = useState(false);
   const freelancerId = profile?.id ?? '';
 
   const { data, isLoading, isOffline, refetch } = useCachedQuery(
@@ -43,15 +47,23 @@ export default function DashboardScreen() {
   );
   const { data: upcomingInvoices } = useCachedQuery(`upcoming-invoices:${freelancerId}`, () => getUpcomingInvoices(freelancerId, 5));
 
+  const visibleInvoices = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    return (upcomingInvoices ?? []).filter((inv) => {
+      if (overdueOnly && inv.status !== 'overdue') return false;
+      if (q && !(inv.client?.name ?? '').toLowerCase().includes(q)) return false;
+      return true;
+    });
+  }, [upcomingInvoices, query, overdueOnly]);
+
   const { todayInvoices, laterInvoices } = useMemo(() => {
-    const invoices = upcomingInvoices ?? [];
-    const isUrgent = (inv: (typeof invoices)[number]) => {
+    const isUrgent = (inv: (typeof visibleInvoices)[number]) => {
       if (inv.status === 'overdue') return true;
       const days = daysUntil(inv.due_date);
       return days !== null && days <= 3;
     };
-    return { todayInvoices: invoices.filter(isUrgent), laterInvoices: invoices.filter((inv) => !isUrgent(inv)) };
-  }, [upcomingInvoices]);
+    return { todayInvoices: visibleInvoices.filter(isUrgent), laterInvoices: visibleInvoices.filter((inv) => !isUrgent(inv)) };
+  }, [visibleInvoices]);
 
   const revenueChange = useMemo(() => {
     const months = data?.revenueByMonth ?? [];
@@ -60,6 +72,19 @@ export default function DashboardScreen() {
     if (prev <= 0) return null;
     return ((last - prev) / prev) * 100;
   }, [data?.revenueByMonth]);
+
+  const handleSendReminders = async () => {
+    setSendingReminders(true);
+    try {
+      const overdue = await getOverdueInvoices(freelancerId);
+      const results = await sendPaymentReminders(overdue);
+      Alert.alert('Payment reminders', summarizeReminderResults(results));
+    } catch (err) {
+      Alert.alert('Could not send reminders', err instanceof Error ? err.message : 'Something went wrong.');
+    } finally {
+      setSendingReminders(false);
+    }
+  };
 
   if (!profile) return null;
 
@@ -103,7 +128,10 @@ export default function DashboardScreen() {
             >
               <IcoSearch color={theme.textSecondary} size={18} />
             </Pressable>
-            <Pressable style={[styles.iconButton, { backgroundColor: theme.backgroundElement, borderColor: theme.border }]}>
+            <Pressable
+              onPress={() => router.push({ pathname: '/(freelancer)/invoices', params: { status: 'overdue' } })}
+              style={[styles.iconButton, { backgroundColor: theme.backgroundElement, borderColor: theme.border }]}
+            >
               <IcoBell color={theme.textSecondary} size={18} />
               {(data?.overdueInvoiceCount ?? 0) > 0 ? (
                 <View style={[styles.bellDot, { backgroundColor: theme.danger, borderColor: theme.background }]} />
@@ -117,12 +145,21 @@ export default function DashboardScreen() {
                 <IcoSearch color={theme.textSecondary} size={16} />
                 <TextInput
                   autoFocus
+                  value={query}
+                  onChangeText={setQuery}
                   placeholder="Search invoices, clients..."
                   placeholderTextColor={theme.textSecondary}
                   style={{ flex: 1, fontSize: fontSize.small, color: theme.text, fontFamily: fonts.sans }}
                 />
-                <IcoFilter color={theme.textSecondary} size={16} />
+                <Pressable onPress={() => setOverdueOnly((v) => !v)} hitSlop={8}>
+                  <IcoFilter color={overdueOnly ? theme.primary : theme.textSecondary} size={16} />
+                </Pressable>
               </View>
+              {overdueOnly ? (
+                <ThemedText type="code" themeColor="primary" style={styles.filterHint}>
+                  Showing overdue only
+                </ThemedText>
+              ) : null}
             </View>
           ) : null}
 
@@ -157,7 +194,7 @@ export default function DashboardScreen() {
             <WeekDayStrip />
           </View>
 
-          {upcomingInvoices && upcomingInvoices.length > 0 ? (
+          {visibleInvoices.length > 0 ? (
             <View style={styles.section}>
               <View style={styles.sectionHeaderRow}>
                 <ThemedText type="smallBold">Client Balances</ThemedText>
@@ -167,7 +204,13 @@ export default function DashboardScreen() {
                   </ThemedText>
                 </Pressable>
               </View>
-              <ClientBalanceCarousel invoices={upcomingInvoices.slice(0, 3)} />
+              <ClientBalanceCarousel invoices={visibleInvoices.slice(0, 3)} />
+            </View>
+          ) : query || overdueOnly ? (
+            <View style={styles.section}>
+              <ThemedText type="small" themeColor="textSecondary">
+                No matching invoices.
+              </ThemedText>
             </View>
           ) : null}
 
@@ -265,10 +308,7 @@ export default function DashboardScreen() {
           ) : null}
 
           <View style={styles.ctaWrap}>
-            <PrimaryButton
-              label="Send Payment Reminders"
-              onPress={() => Alert.alert('Coming soon', 'Bulk payment reminders aren’t wired up yet.')}
-            />
+            <PrimaryButton label="Send Payment Reminders" onPress={handleSendReminders} loading={sendingReminders} />
           </View>
 
           <ThemedText type="smallBold" style={styles.sectionTitle}>
@@ -347,6 +387,9 @@ const styles = StyleSheet.create({
     borderWidth: StyleSheet.hairlineWidth,
     paddingHorizontal: 14,
     paddingVertical: 10,
+  },
+  filterHint: {
+    marginTop: 8,
   },
   heroWrap: {
     paddingHorizontal: 20,

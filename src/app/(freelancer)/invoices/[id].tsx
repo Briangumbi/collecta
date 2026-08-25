@@ -13,6 +13,7 @@ import { useThemeTokens } from '@/theme/ThemeProvider';
 import { avatarColorFor } from '@/lib/avatar-colors';
 import { formatDate, formatInvoiceRef } from '@/lib/format';
 import { getInvoiceDetail, markInvoicePaidManually, markInvoiceSent } from '@/lib/queries';
+import { sendPaymentReminder } from '@/lib/reminders';
 import type { Invoice, Profile, Project } from '@/types/database';
 
 export default function InvoiceDetailScreen() {
@@ -24,6 +25,7 @@ export default function InvoiceDetailScreen() {
   const [project, setProject] = useState<Pick<Project, 'id' | 'title'> | null>(null);
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
+  const [sendingReminder, setSendingReminder] = useState(false);
 
   const load = async () => {
     if (!id) return;
@@ -77,6 +79,18 @@ export default function InvoiceDetailScreen() {
     await markInvoiceSent(invoice.id);
     await load();
     setUpdating(false);
+  };
+
+  const handleReminder = async () => {
+    setSendingReminder(true);
+    try {
+      const result = await sendPaymentReminder({ ...invoice, client: { name: client.name } });
+      Alert.alert(result.sent ? 'Reminder sent' : 'Could not send reminder', result.sent ? `${client.name} was notified.` : result.reason);
+    } catch (err) {
+      Alert.alert('Could not send reminder', err instanceof Error ? err.message : 'Something went wrong.');
+    } finally {
+      setSendingReminder(false);
+    }
   };
 
   return (
@@ -159,13 +173,23 @@ export default function InvoiceDetailScreen() {
           <View style={styles.actionRow}>
             {!isDraft ? (
               <Pressable
-                style={[styles.reminderButton, { borderColor: theme.border, backgroundColor: theme.backgroundElement, borderRadius: radius.pill }]}
-                onPress={() => Alert.alert('Coming soon', 'Reminder emails aren’t wired up yet.')}
+                style={[
+                  styles.reminderButton,
+                  { borderColor: theme.border, backgroundColor: theme.backgroundElement, borderRadius: radius.pill, opacity: sendingReminder ? 0.6 : 1 },
+                ]}
+                onPress={handleReminder}
+                disabled={sendingReminder}
               >
-                <IcoMail color={theme.primary} size={16} />
-                <ThemedText type="smallBold" themeColor="primary">
-                  Reminder
-                </ThemedText>
+                {sendingReminder ? (
+                  <ActivityIndicator size="small" color={theme.primary} />
+                ) : (
+                  <>
+                    <IcoMail color={theme.primary} size={16} />
+                    <ThemedText type="smallBold" themeColor="primary">
+                      Reminder
+                    </ThemedText>
+                  </>
+                )}
               </Pressable>
             ) : null}
             <View style={styles.sendButtonWrap}>

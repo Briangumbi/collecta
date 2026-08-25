@@ -1,6 +1,6 @@
-import { router } from 'expo-router';
-import { useMemo, useState } from 'react';
-import { Alert, Pressable, RefreshControl, ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import { router, useFocusEffect } from 'expo-router';
+import { useCallback, useMemo, useState } from 'react';
+import { Pressable, RefreshControl, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 
 import { GlowBackground } from '@/components/glow-background';
 import { IcoChevronRight, IcoSearch } from '@/components/icons';
@@ -30,6 +30,13 @@ export default function ClientsScreen() {
 
   const { data, isLoading, isOffline, refetch } = useCachedQuery(`clients:${freelancerId}`, () => getClients(freelancerId));
 
+  useFocusEffect(
+    useCallback(() => {
+      refetch();
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [])
+  );
+
   const filtered = useMemo(() => {
     const clients = data ?? [];
     return clients.filter((c) => {
@@ -52,7 +59,7 @@ export default function ClientsScreen() {
       >
         <ScreenHeader
           title="Clients"
-          action={<PillActionButton label="Add" onPress={() => Alert.alert('Coming soon', 'Adding clients directly isn’t wired up yet.')} />}
+          action={<PillActionButton label="Add" onPress={() => router.push('/(freelancer)/clients/new')} />}
         />
 
         <OfflineBanner visible={isOffline} />

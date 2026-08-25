@@ -1,4 +1,4 @@
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { Pressable, RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
 
@@ -26,7 +26,8 @@ export default function InvoicesScreen() {
   const theme = useTheme();
   const { radius, cardShadow } = useThemeTokens();
   const freelancerId = profile?.id ?? '';
-  const [filter, setFilter] = useState<InvoiceStatus | 'all'>('all');
+  const { status: initialStatus } = useLocalSearchParams<{ status?: InvoiceStatus }>();
+  const [filter, setFilter] = useState<InvoiceStatus | 'all'>(initialStatus ?? 'all');
 
   const { data, isLoading, isOffline, refetch } = useCachedQuery(`invoices:${freelancerId}`, () => getInvoices(freelancerId));
 

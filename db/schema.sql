@@ -15,6 +15,7 @@ create table public.profiles (
   email text not null,
   push_token text,
   theme text not null default 'amber-noir',
+  notification_prefs jsonb not null default '{"invoicePaid":true,"paymentReminders":true,"weeklyReport":false,"projectUpdates":true,"marketing":false}'::jsonb,
   created_at timestamptz not null default now()
 );
 

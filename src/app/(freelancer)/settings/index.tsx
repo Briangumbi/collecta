@@ -21,7 +21,7 @@ import { formatDate } from '@/lib/format';
 import { getSubscription } from '@/lib/queries';
 import { supabase } from '@/lib/supabase';
 import { PRO_PRICE_LABEL } from '@/app/upgrade';
-import type { Subscription } from '@/types/database';
+import type { NotificationPrefs, Subscription } from '@/types/database';
 
 // Decorative gradient stop for the profile avatar — see Dashboard's header avatar for the same treatment.
 const AVATAR_GRADIENT_DIM = '#92610a';
@@ -37,13 +37,7 @@ export default function FreelancerSettingsScreen() {
   const [saving, setSaving] = useState(false);
   const [editingProfile, setEditingProfile] = useState(false);
   const [subscription, setSubscription] = useState<Subscription | null>(null);
-  const [notifications, setNotifications] = useState({
-    invoicePaid: true,
-    paymentReminders: true,
-    weeklyReport: false,
-    projectUpdates: true,
-    marketing: false,
-  });
+  const [savingNotification, setSavingNotification] = useState<keyof NotificationPrefs | null>(null);
 
   useFocusEffect(
     useCallback(() => {
@@ -72,8 +66,13 @@ export default function FreelancerSettingsScreen() {
     }
   };
 
-  const toggleNotification = (key: keyof typeof notifications) => (value: boolean) =>
-    setNotifications((prev) => ({ ...prev, [key]: value }));
+  const toggleNotification = (key: keyof NotificationPrefs) => async (value: boolean) => {
+    setSavingNotification(key);
+    const next = { ...profile.notification_prefs, [key]: value };
+    await supabase.from('profiles').update({ notification_prefs: next }).eq('id', profile.id);
+    await refreshProfile();
+    setSavingNotification(null);
+  };
 
   return (
     <ThemedView style={styles.flex}>
@@ -140,36 +139,41 @@ export default function FreelancerSettingsScreen() {
             <NotificationRow
               label="Invoice Paid"
               description="Alert when a client pays an invoice"
-              value={notifications.invoicePaid}
+              value={profile.notification_prefs.invoicePaid}
               onValueChange={toggleNotification('invoicePaid')}
+              disabled={savingNotification === 'invoicePaid'}
               divider
             />
             <NotificationRow
               label="Payment Reminders"
               description="Auto-reminders for overdue invoices"
-              value={notifications.paymentReminders}
+              value={profile.notification_prefs.paymentReminders}
               onValueChange={toggleNotification('paymentReminders')}
+              disabled={savingNotification === 'paymentReminders'}
               divider
             />
             <NotificationRow
               label="Weekly Report"
               description="Revenue summary every Monday"
-              value={notifications.weeklyReport}
+              value={profile.notification_prefs.weeklyReport}
               onValueChange={toggleNotification('weeklyReport')}
+              disabled={savingNotification === 'weeklyReport'}
               divider
             />
             <NotificationRow
               label="Project Updates"
               description="Alerts on project milestones"
-              value={notifications.projectUpdates}
+              value={profile.notification_prefs.projectUpdates}
               onValueChange={toggleNotification('projectUpdates')}
+              disabled={savingNotification === 'projectUpdates'}
               divider
             />
             <NotificationRow
               label="Marketing"
               description="Tips, updates and product news"
-              value={notifications.marketing}
+              value={profile.notification_prefs.marketing}
               onValueChange={toggleNotification('marketing')}
+              disabled={savingNotification === 'marketing'}
             />
           </View>
         </View>
@@ -255,13 +259,13 @@ export default function FreelancerSettingsScreen() {
             <AccountRow
               label="Email & Password"
               icon={<IcoMail color={theme.textSecondary} size={16} />}
-              onPress={() => Alert.alert('Coming soon', 'Account settings aren’t wired up yet.')}
+              onPress={() => router.push('/(freelancer)/settings/email-password')}
               divider
             />
             <AccountRow
               label="Privacy & Data"
               icon={<IcoUser color={theme.textSecondary} size={16} />}
-              onPress={() => Alert.alert('Coming soon', 'Privacy settings aren’t wired up yet.')}
+              onPress={() => router.push('/(freelancer)/settings/privacy-data')}
             />
           </View>
         </View>
@@ -282,12 +286,14 @@ function NotificationRow({
   value,
   onValueChange,
   divider,
+  disabled,
 }: {
   label: string;
   description: string;
   value: boolean;
   onValueChange: (v: boolean) => void;
   divider?: boolean;
+  disabled?: boolean;
 }) {
   const theme = useTheme();
   return (
@@ -298,7 +304,7 @@ function NotificationRow({
           {description}
         </ThemedText>
       </View>
-      <ToggleSwitch value={value} onValueChange={onValueChange} />
+      <ToggleSwitch value={value} onValueChange={onValueChange} disabled={disabled} />
     </View>
   );
 }

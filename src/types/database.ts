@@ -6,6 +6,14 @@ export type InvoiceStatus = 'draft' | 'sent' | 'paid' | 'overdue';
 export type AttachmentType = 'deliverable' | 'receipt';
 export type SubscriptionPlan = 'free' | 'pro';
 
+export interface NotificationPrefs {
+  invoicePaid: boolean;
+  paymentReminders: boolean;
+  weeklyReport: boolean;
+  projectUpdates: boolean;
+  marketing: boolean;
+}
+
 export interface Profile {
   id: string;
   role: UserRole;
@@ -15,6 +23,8 @@ export interface Profile {
   push_token: string | null;
   /** Selected visual style ID (see src/theme/themes) — freelancer-only setting, defaults to 'amber-noir'. */
   theme: string;
+  /** Freelancer-only setting; defaults set in db/schema.sql. */
+  notification_prefs: NotificationPrefs;
   created_at: string;
 }
 
