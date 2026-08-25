@@ -90,6 +90,10 @@ export async function getActivityFeed(freelancerId: string, limit = 20): Promise
 export interface ClientSummary extends Profile {
   activeProjectCount: number;
   outstandingBalance: number;
+  totalBilled: number;
+  /** Most recent invoice or project activity for this client, if any. */
+  lastActivityAt: string | null;
+  status: 'active' | 'inactive';
 }
 
 export async function getClients(freelancerId: string): Promise<ClientSummary[]> {
@@ -105,19 +109,33 @@ export async function getClients(freelancerId: string): Promise<ClientSummary[]>
   const [{ data: profiles, error: profilesError }, { data: projects, error: projectsError }, { data: invoices, error: invoicesError }] =
     await Promise.all([
       supabase.from('profiles').select('*').in('id', clientIds),
-      supabase.from('projects').select('client_id, status').eq('freelancer_id', freelancerId),
-      supabase.from('invoices').select('client_id, amount, status').eq('freelancer_id', freelancerId),
+      supabase.from('projects').select('client_id, status, created_at').eq('freelancer_id', freelancerId),
+      supabase.from('invoices').select('client_id, amount, status, created_at').eq('freelancer_id', freelancerId),
     ]);
   if (profilesError) throw profilesError;
   if (projectsError) throw projectsError;
   if (invoicesError) throw invoicesError;
 
   return (profiles ?? []).map((profile) => {
-    const activeProjectCount = (projects ?? []).filter((p) => p.client_id === profile.id && p.status === 'active').length;
-    const outstandingBalance = (invoices ?? [])
-      .filter((inv) => inv.client_id === profile.id && (inv.status === 'sent' || inv.status === 'overdue'))
+    const clientProjects = (projects ?? []).filter((p) => p.client_id === profile.id);
+    const clientInvoices = (invoices ?? []).filter((inv) => inv.client_id === profile.id);
+    const activeProjectCount = clientProjects.filter((p) => p.status === 'active').length;
+    const outstandingBalance = clientInvoices
+      .filter((inv) => inv.status === 'sent' || inv.status === 'overdue')
       .reduce((sum, inv) => sum + Number(inv.amount), 0);
-    return { ...profile, activeProjectCount, outstandingBalance } as ClientSummary;
+    const totalBilled = clientInvoices.reduce((sum, inv) => sum + Number(inv.amount), 0);
+    const lastActivityAt = [...clientProjects, ...clientInvoices]
+      .map((r) => r.created_at)
+      .sort()
+      .at(-1) ?? null;
+    return {
+      ...profile,
+      activeProjectCount,
+      outstandingBalance,
+      totalBilled,
+      lastActivityAt,
+      status: activeProjectCount > 0 ? 'active' : 'inactive',
+    } as ClientSummary;
   });
 }
 
@@ -153,13 +171,21 @@ export async function getInvoices(freelancerId: string): Promise<InvoiceWithClie
   if (error) throw error;
 
   const clientIds = Array.from(new Set((invoices ?? []).map((i) => i.client_id)));
-  const { data: clients, error: clientsError } = clientIds.length
-    ? await supabase.from('profiles').select('id, name, avatar_url').in('id', clientIds)
-    : { data: [], error: null };
+  const projectIds = Array.from(new Set((invoices ?? []).map((i) => i.project_id).filter((id): id is string => id !== null)));
+  const [{ data: clients, error: clientsError }, { data: projects, error: projectsError }] = await Promise.all([
+    clientIds.length ? supabase.from('profiles').select('id, name, avatar_url').in('id', clientIds) : Promise.resolve({ data: [], error: null }),
+    projectIds.length ? supabase.from('projects').select('id, title').in('id', projectIds) : Promise.resolve({ data: [], error: null }),
+  ]);
   if (clientsError) throw clientsError;
+  if (projectsError) throw projectsError;
 
-  const byId = new Map((clients ?? []).map((c) => [c.id, c]));
-  return (invoices ?? []).map((inv) => ({ ...inv, client: byId.get(inv.client_id) ?? null }));
+  const clientById = new Map((clients ?? []).map((c) => [c.id, c]));
+  const projectById = new Map((projects ?? []).map((p) => [p.id, p]));
+  return (invoices ?? []).map((inv) => ({
+    ...inv,
+    client: clientById.get(inv.client_id) ?? null,
+    project: inv.project_id ? (projectById.get(inv.project_id) ?? null) : null,
+  }));
 }
 
 /** Top outstanding invoices, soonest due first — feeds the dashboard's client-balance carousel and invoice rows. */
@@ -198,7 +224,14 @@ export async function getInvoiceDetail(id: string) {
   const { data: client, error: clientError } = await supabase.from('profiles').select('*').eq('id', invoice.client_id).single();
   if (clientError) throw clientError;
 
-  return { invoice: invoice as Invoice, client: client as Profile };
+  let project: Pick<Project, 'id' | 'title'> | null = null;
+  if (invoice.project_id) {
+    const { data, error: projectError } = await supabase.from('projects').select('id, title').eq('id', invoice.project_id).maybeSingle();
+    if (projectError) throw projectError;
+    project = data;
+  }
+
+  return { invoice: invoice as Invoice, client: client as Profile, project };
 }
 
 export async function createInvoice(input: {
@@ -236,6 +269,12 @@ export async function markInvoiceSent(id: string) {
 
 export interface ProjectWithClient extends Project {
   client: Pick<Profile, 'id' | 'name' | 'avatar_url'> | null;
+  milestoneCount: number;
+  milestonesDone: number;
+  /** 0-100, from milestone completion. */
+  progress: number;
+  /** Latest milestone due date among this project's milestones, if any set. */
+  deadline: string | null;
 }
 
 export async function getProjects(freelancerId: string): Promise<ProjectWithClient[]> {
@@ -246,14 +285,30 @@ export async function getProjects(freelancerId: string): Promise<ProjectWithClie
     .order('created_at', { ascending: false });
   if (error) throw error;
 
+  const projectIds = (projects ?? []).map((p) => p.id);
   const clientIds = Array.from(new Set((projects ?? []).map((p) => p.client_id)));
-  const { data: clients, error: clientsError } = clientIds.length
-    ? await supabase.from('profiles').select('id, name, avatar_url').in('id', clientIds)
-    : { data: [], error: null };
+  const [{ data: clients, error: clientsError }, { data: milestones, error: milestonesError }] = await Promise.all([
+    clientIds.length ? supabase.from('profiles').select('id, name, avatar_url').in('id', clientIds) : Promise.resolve({ data: [], error: null }),
+    projectIds.length ? supabase.from('milestones').select('project_id, status, due_date').in('project_id', projectIds) : Promise.resolve({ data: [], error: null }),
+  ]);
   if (clientsError) throw clientsError;
+  if (milestonesError) throw milestonesError;
 
-  const byId = new Map((clients ?? []).map((c) => [c.id, c]));
-  return (projects ?? []).map((p) => ({ ...p, client: byId.get(p.client_id) ?? null }));
+  const clientById = new Map((clients ?? []).map((c) => [c.id, c]));
+  return (projects ?? []).map((p) => {
+    const projectMilestones = (milestones ?? []).filter((m) => m.project_id === p.id);
+    const milestoneCount = projectMilestones.length;
+    const milestonesDone = projectMilestones.filter((m) => m.status === 'complete').length;
+    const dueDates = projectMilestones.map((m) => m.due_date).filter((d): d is string => d !== null).sort();
+    return {
+      ...p,
+      client: clientById.get(p.client_id) ?? null,
+      milestoneCount,
+      milestonesDone,
+      progress: milestoneCount > 0 ? Math.round((milestonesDone / milestoneCount) * 100) : 0,
+      deadline: dueDates.at(-1) ?? null,
+    };
+  });
 }
 
 export async function createProject(input: { freelancerId: string; clientId: string; title: string }) {

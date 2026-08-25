@@ -6,7 +6,7 @@ import { Outfit_400Regular, Outfit_600SemiBold, useFonts } from '@expo-google-fo
 import { Stack, ThemeProvider as NavigationThemeProvider, type Theme } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect, useMemo } from 'react';
-import { View } from 'react-native';
+import { Platform, StyleSheet, View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 import { LockScreen } from '@/components/lock-screen';
@@ -18,6 +18,12 @@ import { registerForPushNotifications } from '@/lib/notifications';
 import { AppThemeProvider } from '@/theme/ThemeProvider';
 
 SplashScreen.preventAutoHideAsync();
+
+// On web, a phone-shaped app stretched full-bleed across a wide browser
+// window reads as a website, not a mobile app — so on web (only; native is
+// already phone-width) the whole app is framed to a fixed phone-sized
+// column, centered, matching the design reference exactly.
+const WEB_FRAME_MAX_WIDTH = 430;
 
 export default function RootLayout() {
   const [fontsLoaded] = useFonts({
@@ -89,23 +95,32 @@ function RootNavigator() {
   if (isLoading) return null;
 
   return (
-    <NotificationToastProvider>
-      <View style={{ flex: 1 }}>
-        <Stack screenOptions={{ headerShown: false }}>
-          <Stack.Screen
-            name="upgrade"
-            options={{
-              presentation: 'modal',
-              headerShown: true,
-              title: 'Upgrade to Pro',
-              headerStyle: { backgroundColor: theme.background },
-              headerTintColor: theme.text,
-              headerShadowVisible: false,
-            }}
-          />
-        </Stack>
-        <LockScreen />
+    <View style={[styles.webFrameOuter, Platform.OS === 'web' && { backgroundColor: theme.background }]}>
+      <View style={styles.webFrameInner}>
+        <NotificationToastProvider>
+          <View style={{ flex: 1 }}>
+            <Stack screenOptions={{ headerShown: false }}>
+              <Stack.Screen
+                name="upgrade"
+                options={{
+                  presentation: 'modal',
+                  headerShown: true,
+                  title: 'Upgrade to Pro',
+                  headerStyle: { backgroundColor: theme.background },
+                  headerTintColor: theme.text,
+                  headerShadowVisible: false,
+                }}
+              />
+            </Stack>
+            <LockScreen />
+          </View>
+        </NotificationToastProvider>
       </View>
-    </NotificationToastProvider>
+    </View>
   );
 }
+
+const styles = StyleSheet.create({
+  webFrameOuter: Platform.OS === 'web' ? { flex: 1, alignItems: 'center' } : { flex: 1 },
+  webFrameInner: Platform.OS === 'web' ? { flex: 1, width: '100%', maxWidth: WEB_FRAME_MAX_WIDTH } : { flex: 1 },
+});

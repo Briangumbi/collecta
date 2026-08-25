@@ -7,3 +7,16 @@
   --font-rounded: 'SF Pro Rounded', 'Hiragino Maru Gothic ProN', Meiryo, 'MS PGothic', sans-serif;
   --font-serif: Georgia, 'Times New Roman', serif;
 }
+
+/* A phone doesn't have a scrollbar — an OS scrollbar track down the side of
+   the app frame is one of the fastest tells that you're looking at a
+   webpage rather than a native app, so it's hidden everywhere on web. */
+::-webkit-scrollbar {
+  display: none;
+}
+
+html,
+body,
+#root {
+  scrollbar-width: none;
+}

@@ -15,7 +15,7 @@ import { formatCardNumber, formatExpiry, isCardNumberValid, isCvcValid, isExpiry
 
 type Phase = 'form' | 'processing' | 'success' | 'declined';
 
-const PRO_PRICE_LABEL = '$15/month';
+export const PRO_PRICE_LABEL = '$15/month';
 
 export default function UpgradeScreen() {
   const { profile } = useAuth();

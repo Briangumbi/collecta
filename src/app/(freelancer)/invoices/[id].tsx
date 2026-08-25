@@ -1,22 +1,27 @@
-import { useLocalSearchParams } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, Alert, ScrollView, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
-import { Avatar } from '@/components/avatar';
-import { Card } from '@/components/card';
 import { GlowBackground } from '@/components/glow-background';
+import { IcoChevronLeft, IcoMail } from '@/components/icons';
 import { PrimaryButton } from '@/components/primary-button';
 import { InvoiceStatusBadge } from '@/components/status-badge';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { formatCurrency, formatDate } from '@/lib/format';
+import { useTheme } from '@/hooks/use-theme';
+import { useThemeTokens } from '@/theme/ThemeProvider';
+import { avatarColorFor } from '@/lib/avatar-colors';
+import { formatDate, formatInvoiceRef } from '@/lib/format';
 import { getInvoiceDetail, markInvoicePaidManually, markInvoiceSent } from '@/lib/queries';
-import type { Invoice, Profile } from '@/types/database';
+import type { Invoice, Profile, Project } from '@/types/database';
 
 export default function InvoiceDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
+  const theme = useTheme();
+  const { radius, fonts, cardShadow } = useThemeTokens();
   const [invoice, setInvoice] = useState<Invoice | null>(null);
   const [client, setClient] = useState<Profile | null>(null);
+  const [project, setProject] = useState<Pick<Project, 'id' | 'title'> | null>(null);
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
 
@@ -25,6 +30,7 @@ export default function InvoiceDetailScreen() {
     const result = await getInvoiceDetail(id);
     setInvoice(result.invoice);
     setClient(result.client);
+    setProject(result.project);
     setLoading(false);
   };
 
@@ -40,6 +46,16 @@ export default function InvoiceDetailScreen() {
       </ThemedView>
     );
   }
+
+  const isPaid = invoice.status === 'paid';
+  const isDraft = invoice.status === 'draft';
+  const accent = avatarColorFor(client.id);
+  const initials = client.name
+    .split(' ')
+    .map((p) => p[0])
+    .slice(0, 2)
+    .join('')
+    .toUpperCase();
 
   const handleMarkPaid = () => {
     Alert.alert('Mark as paid?', 'Use this if the client paid outside Ledger (bank transfer, cash, etc).', [
@@ -65,41 +81,100 @@ export default function InvoiceDetailScreen() {
 
   return (
     <ThemedView style={styles.flex}>
-      <GlowBackground width={480} height={280} cy="0%" r="60%" />
+      <GlowBackground height={240} cy="0%" r="60%" />
       <ScrollView contentContainerStyle={styles.content}>
-        <View style={styles.amountBlock}>
-          <ThemedText type="hero" themeColor="primary" style={styles.amount}>
-            {formatCurrency(Number(invoice.amount), invoice.currency)}
-          </ThemedText>
+        <View style={styles.headerRow}>
+          <Pressable onPress={() => router.back()} style={[styles.backButton, { backgroundColor: theme.backgroundElement, borderColor: theme.border }]}>
+            <IcoChevronLeft color={theme.textSecondary} size={18} />
+          </Pressable>
+          <View style={styles.headerText}>
+            <ThemedText type="code" themeColor="textSecondary">
+              {formatInvoiceRef(invoice.id)}
+            </ThemedText>
+            <ThemedText style={{ fontFamily: fonts.display, fontSize: 18, color: theme.text }} numberOfLines={1}>
+              {project?.title ?? 'Invoice'}
+            </ThemedText>
+          </View>
           <InvoiceStatusBadge status={invoice.status} />
         </View>
 
-        <Card style={styles.card}>
-          <View style={styles.clientRow}>
-            <Avatar name={client.name} size={40} />
-            <View style={styles.clientText}>
-              <ThemedText type="smallBold">{client.name}</ThemedText>
-              <ThemedText type="small" themeColor="textSecondary">
-                {client.email}
+        <View
+          style={[
+            styles.heroCard,
+            { backgroundColor: theme.backgroundElement, borderRadius: radius.card + 4 },
+            { shadowColor: cardShadow.color, shadowOffset: { width: 0, height: 8 }, shadowOpacity: cardShadow.opacity * 1.2, shadowRadius: 30, elevation: 6 },
+          ]}
+        >
+          <ThemedText type="label" themeColor="textSecondary" style={styles.heroLabel}>
+            Invoice Amount
+          </ThemedText>
+          <View style={styles.heroAmountRow}>
+            <ThemedText style={{ fontFamily: fonts.display, fontSize: 18, color: isPaid ? theme.success : theme.primary, marginTop: 8 }}>$</ThemedText>
+            <ThemedText style={{ fontFamily: fonts.displayHeavy, fontSize: 56, letterSpacing: -1.5, color: isPaid ? theme.success : theme.primary }}>
+              {Math.round(Number(invoice.amount)).toLocaleString()}
+            </ThemedText>
+          </View>
+
+          <View style={styles.detailsRow}>
+            <View style={styles.detailCol}>
+              <ThemedText type="code" themeColor="textSecondary" style={styles.detailLabel}>
+                Client
+              </ThemedText>
+              <View style={styles.clientChip}>
+                <View style={[styles.clientAvatar, { backgroundColor: `${accent}20` }]}>
+                  <ThemedText style={{ fontFamily: fonts.display, fontSize: 9, color: accent }}>{initials}</ThemedText>
+                </View>
+                <ThemedText type="small" style={{ fontWeight: '600' }} numberOfLines={1}>
+                  {client.name}
+                </ThemedText>
+              </View>
+            </View>
+            <View style={styles.detailCol}>
+              <ThemedText type="code" themeColor="textSecondary" style={styles.detailLabel}>
+                Due Date
+              </ThemedText>
+              <ThemedText type="small" themeColor={invoice.status === 'overdue' ? 'danger' : 'text'} style={styles.detailValue}>
+                {formatDate(invoice.due_date)}
+              </ThemedText>
+            </View>
+            <View style={styles.detailCol}>
+              <ThemedText type="code" themeColor="textSecondary" style={styles.detailLabel}>
+                Created
+              </ThemedText>
+              <ThemedText type="small" style={styles.detailValue}>
+                {formatDate(invoice.created_at)}
               </ThemedText>
             </View>
           </View>
-        </Card>
+        </View>
 
-        <Card style={styles.card}>
-          <Row label="Created" value={formatDate(invoice.created_at)} />
-          <Row label="Due" value={formatDate(invoice.due_date)} />
-          <Row label="Paid" value={invoice.paid_at ? formatDate(invoice.paid_at) : '—'} />
-          {invoice.payment_transaction_id ? <Row label="Payment reference" value={invoice.payment_transaction_id} /> : null}
-        </Card>
-
-        {invoice.status === 'draft' ? (
-          <PrimaryButton label="Send to client" onPress={handleSend} loading={updating} />
+        {invoice.paid_at || invoice.payment_transaction_id ? (
+          <View style={[styles.infoCard, { backgroundColor: theme.backgroundElement, borderRadius: radius.card }]}>
+            {invoice.paid_at ? <InfoRow label="Paid" value={formatDate(invoice.paid_at)} /> : null}
+            {invoice.payment_transaction_id ? <InfoRow label="Payment reference" value={invoice.payment_transaction_id} /> : null}
+          </View>
         ) : null}
 
-        {invoice.status !== 'paid' ? (
-          <View style={invoice.status === 'draft' ? styles.buttonGap : undefined}>
-            <PrimaryButton label="Mark as paid manually" variant="secondary" onPress={handleMarkPaid} loading={updating} />
+        {!isPaid ? (
+          <View style={styles.actionRow}>
+            {!isDraft ? (
+              <Pressable
+                style={[styles.reminderButton, { borderColor: theme.border, backgroundColor: theme.backgroundElement, borderRadius: radius.pill }]}
+                onPress={() => Alert.alert('Coming soon', 'Reminder emails aren’t wired up yet.')}
+              >
+                <IcoMail color={theme.primary} size={16} />
+                <ThemedText type="smallBold" themeColor="primary">
+                  Reminder
+                </ThemedText>
+              </Pressable>
+            ) : null}
+            <View style={styles.sendButtonWrap}>
+              <PrimaryButton
+                label={isDraft ? 'Send Invoice' : 'Mark as Paid'}
+                onPress={isDraft ? handleSend : handleMarkPaid}
+                loading={updating}
+              />
+            </View>
           </View>
         ) : null}
       </ScrollView>
@@ -107,9 +182,9 @@ export default function InvoiceDetailScreen() {
   );
 }
 
-function Row({ label, value }: { label: string; value: string }) {
+function InfoRow({ label, value }: { label: string; value: string }) {
   return (
-    <View style={styles.row}>
+    <View style={styles.infoRow}>
       <ThemedText type="small" themeColor="textSecondary">
         {label}
       </ThemedText>
@@ -125,30 +200,87 @@ const styles = StyleSheet.create({
     padding: 20,
     paddingBottom: 140,
   },
-  amountBlock: {
+  headerRow: {
+    flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 28,
-    gap: 10,
+    gap: 12,
+    marginBottom: 20,
   },
-  amount: {
-    marginVertical: 2,
+  backButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    borderWidth: StyleSheet.hairlineWidth,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  card: {
+  headerText: {
+    flex: 1,
+    minWidth: 0,
+  },
+  heroCard: {
+    padding: 22,
     marginBottom: 16,
   },
-  clientRow: {
+  heroLabel: {
+    marginBottom: 8,
+  },
+  heroAmountRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 2,
+    marginBottom: 18,
+  },
+  detailsRow: {
+    flexDirection: 'row',
+    gap: 14,
+  },
+  detailCol: {
+    flex: 1,
+    minWidth: 0,
+  },
+  detailLabel: {
+    marginBottom: 4,
+  },
+  detailValue: {
+    fontWeight: '600',
+  },
+  clientChip: {
     flexDirection: 'row',
     alignItems: 'center',
+    gap: 7,
   },
-  clientText: {
-    marginLeft: 12,
+  clientAvatar: {
+    width: 22,
+    height: 22,
+    borderRadius: 7,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  row: {
+  infoCard: {
+    padding: 16,
+    marginBottom: 16,
+    gap: 4,
+  },
+  infoRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    paddingVertical: 6,
+    paddingVertical: 4,
   },
-  buttonGap: {
-    marginTop: 12,
+  actionRow: {
+    flexDirection: 'row',
+    gap: 10,
+    marginTop: 4,
+  },
+  reminderButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 7,
+    borderWidth: StyleSheet.hairlineWidth,
+    paddingHorizontal: 20,
+  },
+  sendButtonWrap: {
+    flex: 1,
   },
 });

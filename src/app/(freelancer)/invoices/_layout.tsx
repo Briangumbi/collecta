@@ -12,9 +12,9 @@ export default function InvoicesStackLayout() {
         headerShadowVisible: false,
       }}
     >
-      <Stack.Screen name="index" options={{ title: 'Invoices' }} />
+      <Stack.Screen name="index" options={{ headerShown: false }} />
       <Stack.Screen name="new" options={{ title: 'New Invoice', presentation: 'modal' }} />
-      <Stack.Screen name="[id]" options={{ title: '' }} />
+      <Stack.Screen name="[id]" options={{ headerShown: false }} />
     </Stack>
   );
 }

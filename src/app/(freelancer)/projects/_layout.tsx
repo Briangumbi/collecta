@@ -12,9 +12,9 @@ export default function ProjectsStackLayout() {
         headerShadowVisible: false,
       }}
     >
-      <Stack.Screen name="index" options={{ title: 'Projects' }} />
+      <Stack.Screen name="index" options={{ headerShown: false }} />
       <Stack.Screen name="new" options={{ title: 'New Project', presentation: 'modal' }} />
-      <Stack.Screen name="[id]" options={{ title: '' }} />
+      <Stack.Screen name="[id]" options={{ headerShown: false }} />
     </Stack>
   );
 }

@@ -12,8 +12,8 @@ export default function ClientsStackLayout() {
         headerShadowVisible: false,
       }}
     >
-      <Stack.Screen name="index" options={{ title: 'Clients' }} />
-      <Stack.Screen name="[id]" options={{ title: '' }} />
+      <Stack.Screen name="index" options={{ headerShown: false }} />
+      <Stack.Screen name="[id]" options={{ headerShown: false }} />
     </Stack>
   );
 }

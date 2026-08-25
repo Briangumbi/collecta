@@ -4,15 +4,19 @@ import { ActivityIndicator, Pressable, ScrollView, StyleSheet, View } from 'reac
 
 import { Avatar } from '@/components/avatar';
 import { Card } from '@/components/card';
+import { GlowBackground } from '@/components/glow-background';
+import { IcoChevronLeft } from '@/components/icons';
 import { InvoiceStatusBadge, ProjectStatusBadge } from '@/components/status-badge';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
+import { useTheme } from '@/hooks/use-theme';
 import { formatCurrency, formatDate } from '@/lib/format';
 import { getClientDetail } from '@/lib/queries';
 import type { Invoice, Profile, Project } from '@/types/database';
 
 export default function ClientDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
+  const theme = useTheme();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [projects, setProjects] = useState<Project[]>([]);
   const [invoices, setInvoices] = useState<Invoice[]>([]);
@@ -38,7 +42,12 @@ export default function ClientDetailScreen() {
 
   return (
     <ThemedView style={styles.flex}>
+      <GlowBackground height={240} cy="0%" r="60%" />
       <ScrollView contentContainerStyle={styles.content}>
+        <Pressable onPress={() => router.back()} style={[styles.backButton, { backgroundColor: theme.backgroundElement, borderColor: theme.border }]}>
+          <IcoChevronLeft color={theme.textSecondary} size={18} />
+        </Pressable>
+
         <View style={styles.header}>
           <Avatar name={profile.name} size={64} />
           <ThemedText type="title" style={styles.name}>
@@ -102,6 +111,15 @@ const styles = StyleSheet.create({
   content: {
     padding: 20,
     paddingBottom: 130,
+  },
+  backButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    borderWidth: StyleSheet.hairlineWidth,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 16,
   },
   header: {
     alignItems: 'center',

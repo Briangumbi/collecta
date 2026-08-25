@@ -6,10 +6,9 @@ import { useTheme } from '@/hooks/use-theme';
 import { useThemePicker, useThemeTokens } from '@/theme/ThemeProvider';
 
 /**
- * Selectable list of visual styles, each rendered as a small palette swatch
- * + name with the active one checked. Built as a list from the start (not a
- * toggle) so adding a Style 2 later is just another entry in the themes
- * array — no changes here.
+ * Row of style cards, each a small live-palette preview + name, active one
+ * checked. A row (not a vertical list) so it reads as a quick visual compare
+ * — matches the design reference's theme switcher exactly.
  */
 export function ThemePicker() {
   const theme = useTheme();
@@ -17,31 +16,35 @@ export function ThemePicker() {
   const { themeId, availableThemes, setThemeId } = useThemePicker();
 
   return (
-    <View style={styles.list}>
+    <View style={styles.row}>
       {availableThemes.map((style) => {
         const active = style.id === themeId;
+        const previewColors = style.modes.dark.colors;
         return (
           <Pressable
             key={style.id}
             onPress={() => setThemeId(style.id)}
-            disabled={availableThemes.length === 1}
             style={[
-              styles.row,
+              styles.card,
               {
-                borderRadius: radius.card,
+                borderRadius: radius.card - 4,
                 borderColor: active ? theme.primary : theme.border,
-                backgroundColor: active ? theme.backgroundSelected : 'transparent',
+                backgroundColor: active ? theme.warningBg : theme.backgroundElement,
               },
             ]}
           >
-            <View style={[styles.swatch, { backgroundColor: style.swatch.background, borderColor: theme.border }]}>
-              <View style={[styles.swatchSurface, { backgroundColor: style.swatch.surface }]} />
-              <View style={[styles.swatchAccent, { backgroundColor: style.swatch.accent }]} />
+            <View style={[styles.preview, { backgroundColor: style.swatch.background, borderColor: theme.border }]}>
+              <View style={[styles.previewBar, { backgroundColor: previewColors.text, opacity: 0.7 }]} />
+              <View style={[styles.previewAccent, { backgroundColor: style.swatch.accent }]} />
             </View>
-            <ThemedText type="default" style={styles.name}>
+            <ThemedText type="small" style={{ color: active ? theme.primary : theme.text, fontWeight: active ? '600' : '400' }} numberOfLines={1}>
               {style.name}
             </ThemedText>
-            {active ? <Ionicons name="checkmark-circle" size={22} color={theme.primary} /> : null}
+            {active ? (
+              <View style={[styles.badge, { backgroundColor: theme.primary }]}>
+                <Ionicons name="checkmark" size={10} color={theme.primaryText} />
+              </View>
+            ) : null}
           </Pressable>
         );
       })}
@@ -50,40 +53,46 @@ export function ThemePicker() {
 }
 
 const styles = StyleSheet.create({
-  list: {
-    gap: 10,
-  },
   row: {
     flexDirection: 'row',
-    alignItems: 'center',
-    padding: 10,
-    borderWidth: StyleSheet.hairlineWidth,
+    gap: 10,
   },
-  swatch: {
-    width: 44,
-    height: 44,
-    borderRadius: 12,
-    borderWidth: StyleSheet.hairlineWidth,
-    overflow: 'hidden',
-    marginRight: 12,
-  },
-  swatchSurface: {
-    position: 'absolute',
-    right: 0,
-    bottom: 0,
-    width: '65%',
-    height: '65%',
-    borderTopLeftRadius: 10,
-  },
-  swatchAccent: {
-    position: 'absolute',
-    left: 6,
-    top: 6,
-    width: 14,
-    height: 14,
-    borderRadius: 7,
-  },
-  name: {
+  card: {
     flex: 1,
+    borderWidth: 1.5,
+    padding: 10,
+  },
+  preview: {
+    height: 36,
+    borderRadius: 10,
+    borderWidth: StyleSheet.hairlineWidth,
+    marginBottom: 8,
+    overflow: 'hidden',
+  },
+  previewBar: {
+    position: 'absolute',
+    top: 8,
+    left: 6,
+    width: 20,
+    height: 4,
+    borderRadius: 2,
+  },
+  previewAccent: {
+    position: 'absolute',
+    bottom: 6,
+    left: 6,
+    right: 6,
+    height: 4,
+    borderRadius: 2,
+  },
+  badge: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+    width: 16,
+    height: 16,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });
