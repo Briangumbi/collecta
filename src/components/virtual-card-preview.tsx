@@ -3,27 +3,39 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
-import { useThemeScheme } from '@/hooks/use-theme';
+import { useTheme } from '@/hooks/use-theme';
+import { useThemeTokens } from '@/theme/ThemeProvider';
 
-/** Purely decorative "virtual card" mock — reflects the simulated form fields live. */
+/**
+ * Purely decorative "virtual card" mock — reflects the simulated form fields
+ * live. Deliberately always dark plastic regardless of app theme/mode (like
+ * a real card mockup, not UI chrome) — only the accent chip is theme-driven.
+ */
 export function VirtualCardPreview({ name, number, expiry }: { name: string; number: string; expiry: string }) {
-  const isDark = useThemeScheme() === 'dark';
+  const theme = useTheme();
+  const { shadows } = useThemeTokens();
 
   const displayNumber = (number || '•••• •••• •••• ••••').padEnd(19, '•').slice(0, 19);
   const displayName = name || 'YOUR NAME';
   const displayExpiry = expiry || 'MM/YY';
 
   return (
-    <View style={styles.shadowWrap}>
-      <LinearGradient
-        colors={isDark ? ['#242428', '#131315'] : ['#242428', '#131315']}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={styles.card}
-      >
+    <View
+      style={[
+        styles.shadowWrap,
+        {
+          shadowColor: shadows.virtualCard.color,
+          shadowOffset: shadows.virtualCard.offset,
+          shadowOpacity: shadows.virtualCard.opacity,
+          shadowRadius: shadows.virtualCard.radius,
+          elevation: shadows.virtualCard.elevation,
+        },
+      ]}
+    >
+      <LinearGradient colors={['#242428', '#131315']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.card}>
         <LinearGradient colors={['#FFFFFF1A', '#FFFFFF00']} style={styles.sheen} pointerEvents="none" />
         <View style={styles.topRow}>
-          <View style={styles.chip} />
+          <View style={[styles.chip, { backgroundColor: `${theme.primary}55`, borderColor: `${theme.primary}88` }]} />
           <Ionicons name="wifi" size={18} color="#F5F5F399" style={styles.contactless} />
         </View>
         <ThemedText style={styles.number}>{displayNumber}</ThemedText>
@@ -41,11 +53,6 @@ export function VirtualCardPreview({ name, number, expiry }: { name: string; num
 const styles = StyleSheet.create({
   shadowWrap: {
     borderRadius: 20,
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 14 },
-    shadowOpacity: 0.3,
-    shadowRadius: 24,
-    elevation: 8,
     marginBottom: 24,
   },
   card: {
@@ -71,9 +78,7 @@ const styles = StyleSheet.create({
     width: 36,
     height: 26,
     borderRadius: 5,
-    backgroundColor: '#D4FF3D55',
     borderWidth: 1,
-    borderColor: '#D4FF3D88',
   },
   contactless: {
     transform: [{ rotate: '90deg' }],

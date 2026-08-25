@@ -1,8 +1,8 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { StyleSheet, View, type ViewProps } from 'react-native';
 
-import { Radius } from '@/constants/theme';
-import { useTheme, useThemeScheme } from '@/hooks/use-theme';
+import { useTheme } from '@/hooks/use-theme';
+import { useThemeTokens } from '@/theme/ThemeProvider';
 
 /**
  * Real elevation, not a flat bordered box: a neutral drop shadow on the
@@ -15,7 +15,7 @@ import { useTheme, useThemeScheme } from '@/hooks/use-theme';
  */
 export function Card({ style, children, ...rest }: ViewProps) {
   const theme = useTheme();
-  const isDark = useThemeScheme() === 'dark';
+  const { radius, cardShadow, cardHighlight } = useThemeTokens();
 
   return (
     // All four shadow* props must live in one style object — react-native-web
@@ -26,21 +26,19 @@ export function Card({ style, children, ...rest }: ViewProps) {
       style={[
         styles.shadowWrap,
         {
-          shadowColor: isDark ? '#000000' : '#3A3A3C',
-          shadowOffset: { width: 0, height: 10 },
-          shadowOpacity: 0.16,
-          shadowRadius: 20,
+          borderRadius: radius.card,
+          shadowColor: cardShadow.color,
+          shadowOffset: cardShadow.offset,
+          shadowOpacity: cardShadow.opacity,
+          shadowRadius: cardShadow.radius,
+          elevation: cardShadow.elevation,
         },
         style,
       ]}
       {...rest}
     >
-      <View style={[styles.card, { backgroundColor: theme.backgroundElement, borderColor: theme.border }]}>
-        <LinearGradient
-          colors={isDark ? ['#FFFFFF12', '#FFFFFF00'] : ['#FFFFFFB0', '#FFFFFF00']}
-          style={styles.highlight}
-          pointerEvents="none"
-        />
+      <View style={[styles.card, { borderRadius: radius.card, backgroundColor: theme.backgroundElement, borderColor: theme.border }]}>
+        <LinearGradient colors={cardHighlight} style={styles.highlight} pointerEvents="none" />
         {children}
       </View>
     </View>
@@ -48,12 +46,8 @@ export function Card({ style, children, ...rest }: ViewProps) {
 }
 
 const styles = StyleSheet.create({
-  shadowWrap: {
-    borderRadius: Radius.card,
-    elevation: 5,
-  },
+  shadowWrap: {},
   card: {
-    borderRadius: Radius.card,
     borderWidth: StyleSheet.hairlineWidth,
     padding: 16,
     overflow: 'hidden',

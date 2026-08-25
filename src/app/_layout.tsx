@@ -1,3 +1,5 @@
+import '@/global.css';
+
 import {
   Manrope_500Medium,
   Manrope_600SemiBold,
@@ -5,55 +7,23 @@ import {
   Manrope_800ExtraBold,
   useFonts,
 } from '@expo-google-fonts/manrope';
-import { Stack, ThemeProvider, type Theme } from 'expo-router';
+import { Stack, ThemeProvider as NavigationThemeProvider, type Theme } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
-import { useEffect } from 'react';
-import { useColorScheme, View } from 'react-native';
+import { useEffect, useMemo } from 'react';
+import { View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 import { LockScreen } from '@/components/lock-screen';
 import { AppLockProvider } from '@/contexts/app-lock-context';
 import { AuthProvider, useAuth } from '@/contexts/auth-context';
 import { NotificationToastProvider } from '@/contexts/notification-toast-context';
-import { Colors } from '@/constants/theme';
-import { useTheme } from '@/hooks/use-theme';
+import { useTheme, useThemeScheme } from '@/hooks/use-theme';
 import { registerForPushNotifications } from '@/lib/notifications';
+import { AppThemeProvider } from '@/theme/ThemeProvider';
 
 SplashScreen.preventAutoHideAsync();
 
-const navDarkTheme: Theme = {
-  dark: true,
-  colors: {
-    primary: Colors.dark.primary,
-    background: Colors.dark.background,
-    card: Colors.dark.backgroundElement,
-    text: Colors.dark.text,
-    border: Colors.dark.border,
-    notification: Colors.dark.danger,
-  },
-  fonts: {
-    regular: { fontFamily: 'Manrope_500Medium', fontWeight: '500' },
-    medium: { fontFamily: 'Manrope_600SemiBold', fontWeight: '600' },
-    bold: { fontFamily: 'Manrope_700Bold', fontWeight: '700' },
-    heavy: { fontFamily: 'Manrope_800ExtraBold', fontWeight: '800' },
-  },
-};
-
-const navLightTheme: Theme = {
-  dark: false,
-  colors: {
-    primary: Colors.light.primary,
-    background: Colors.light.background,
-    card: Colors.light.backgroundElement,
-    text: Colors.light.text,
-    border: Colors.light.border,
-    notification: Colors.light.danger,
-  },
-  fonts: navDarkTheme.fonts,
-};
-
 export default function RootLayout() {
-  const colorScheme = useColorScheme();
   const [fontsLoaded] = useFonts({
     Manrope_500Medium,
     Manrope_600SemiBold,
@@ -65,15 +35,46 @@ export default function RootLayout() {
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <ThemeProvider value={colorScheme === 'dark' ? navDarkTheme : navLightTheme}>
-        <AuthProvider>
-          <AppLockProvider>
-            <RootNavigator />
-          </AppLockProvider>
-        </AuthProvider>
-      </ThemeProvider>
+      <AuthProvider>
+        <AppThemeProvider>
+          <NavThemeBridge>
+            <AppLockProvider>
+              <RootNavigator />
+            </AppLockProvider>
+          </NavThemeBridge>
+        </AppThemeProvider>
+      </AuthProvider>
     </GestureHandlerRootView>
   );
+}
+
+/** Resolves the active selected theme + mode into the nav library's Theme shape. */
+function NavThemeBridge({ children }: { children: React.ReactNode }) {
+  const theme = useTheme();
+  const scheme = useThemeScheme();
+
+  const navTheme = useMemo<Theme>(
+    () => ({
+      dark: scheme === 'dark',
+      colors: {
+        primary: theme.primary,
+        background: theme.background,
+        card: theme.backgroundElement,
+        text: theme.text,
+        border: theme.border,
+        notification: theme.danger,
+      },
+      fonts: {
+        regular: { fontFamily: 'Manrope_500Medium', fontWeight: '500' },
+        medium: { fontFamily: 'Manrope_600SemiBold', fontWeight: '600' },
+        bold: { fontFamily: 'Manrope_700Bold', fontWeight: '700' },
+        heavy: { fontFamily: 'Manrope_800ExtraBold', fontWeight: '800' },
+      },
+    }),
+    [theme, scheme]
+  );
+
+  return <NavigationThemeProvider value={navTheme}>{children}</NavigationThemeProvider>;
 }
 
 function RootNavigator() {

@@ -8,10 +8,10 @@ import { OfflineBanner } from '@/components/offline-banner';
 import { InvoiceStatusBadge } from '@/components/status-badge';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { Radius } from '@/constants/theme';
 import { useAuth } from '@/contexts/auth-context';
 import { useCachedQuery } from '@/hooks/use-cached-query';
 import { useTheme } from '@/hooks/use-theme';
+import { useThemeTokens } from '@/theme/ThemeProvider';
 import { formatCurrency, formatDate } from '@/lib/format';
 import { getInvoices, type InvoiceWithClient } from '@/lib/queries';
 import type { InvoiceStatus } from '@/types/database';
@@ -28,6 +28,7 @@ export default function InvoicesScreen() {
   const { profile } = useAuth();
   const freelancerId = profile?.id ?? '';
   const theme = useTheme();
+  const { radius } = useThemeTokens();
   const [filter, setFilter] = useState<InvoiceStatus | 'all'>('all');
 
   const { data, isLoading, isOffline, refetch } = useCachedQuery(`invoices:${freelancerId}`, () => getInvoices(freelancerId));
@@ -47,6 +48,7 @@ export default function InvoicesScreen() {
             style={[
               styles.filterPill,
               {
+                borderRadius: radius.pill,
                 backgroundColor: filter === f.value ? theme.primary : theme.backgroundElement,
                 borderColor: filter === f.value ? theme.primary : theme.border,
               },
@@ -133,7 +135,6 @@ const styles = StyleSheet.create({
   filterPill: {
     paddingHorizontal: 14,
     paddingVertical: 8,
-    borderRadius: Radius.pill,
     borderWidth: StyleSheet.hairlineWidth,
   },
   content: {

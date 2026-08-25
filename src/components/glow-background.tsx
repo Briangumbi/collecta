@@ -1,8 +1,7 @@
 import { StyleSheet } from 'react-native';
 import Svg, { Defs, RadialGradient, Rect, Stop } from 'react-native-svg';
 
-import { Glow } from '@/constants/theme';
-import { useThemeScheme } from '@/hooks/use-theme';
+import { useThemeTokens } from '@/theme/ThemeProvider';
 
 /**
  * Soft lime radial glow, positioned behind a header/greeting or a hero
@@ -22,8 +21,7 @@ export function GlowBackground({
   cy?: string;
   r?: string;
 }) {
-  const scheme = useThemeScheme();
-  const glow = Glow[scheme];
+  const { glow } = useThemeTokens();
 
   return (
     <Svg width={width} height={height} style={styles.absolute} pointerEvents="none">

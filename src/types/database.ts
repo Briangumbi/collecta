@@ -13,6 +13,8 @@ export interface Profile {
   avatar_url: string | null;
   email: string;
   push_token: string | null;
+  /** Selected visual style ID (see src/theme/themes) — freelancer-only setting, defaults to 'lime-noir'. */
+  theme: string;
   created_at: string;
 }
 

@@ -1,8 +1,9 @@
 import { StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
-import { InvoiceStatusColor, ProjectStatusColor, type ThemeColor } from '@/constants/theme';
+import { InvoiceStatusColor, ProjectStatusColor } from '@/constants/status-colors';
 import { useTheme } from '@/hooks/use-theme';
+import type { ThemeColorKey } from '@/theme/tokens';
 import type { InvoiceStatus, ProjectStatus } from '@/types/database';
 
 const LABELS: Record<string, string> = {
@@ -27,7 +28,7 @@ export function ProjectStatusBadge({ status }: { status: ProjectStatus }) {
   return <Badge label={LABELS[status]} fg={fg} bg={bg} />;
 }
 
-function Badge({ label, fg, bg }: { label: string; fg: ThemeColor; bg: ThemeColor }) {
+function Badge({ label, fg, bg }: { label: string; fg: ThemeColorKey; bg: ThemeColorKey }) {
   const theme = useTheme();
   return (
     <View style={[styles.badge, { backgroundColor: theme[bg] }]}>

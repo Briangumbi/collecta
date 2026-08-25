@@ -3,8 +3,8 @@ import { Pressable, StyleSheet, View } from 'react-native';
 
 import { InvoiceStatusBadge } from '@/components/status-badge';
 import { ThemedText } from '@/components/themed-text';
-import { Radius } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
+import { useThemeTokens } from '@/theme/ThemeProvider';
 import { formatCurrency, formatDate } from '@/lib/format';
 import type { InvoiceWithClient } from '@/lib/queries';
 
@@ -19,6 +19,7 @@ const PEEK_OFFSET = 16;
  */
 export function StackedInvoiceDeck({ invoices }: { invoices: InvoiceWithClient[] }) {
   const theme = useTheme();
+  const { radius, shadows } = useThemeTokens();
   if (invoices.length === 0) return null;
 
   const cards = invoices.slice(0, 3);
@@ -37,13 +38,15 @@ export function StackedInvoiceDeck({ invoices }: { invoices: InvoiceWithClient[]
               // for why (react-native-web silently drops the shadow otherwise).
               top: depth * PEEK_OFFSET,
               zIndex: cards.length - depth,
+              borderRadius: radius.card,
               backgroundColor: theme.backgroundElement,
               borderColor: theme.border,
               opacity: 1 - depth * 0.22,
-              shadowColor: '#000000',
-              shadowOffset: { width: 0, height: 8 },
-              shadowOpacity: 0.22,
-              shadowRadius: 16,
+              shadowColor: shadows.deck.color,
+              shadowOffset: shadows.deck.offset,
+              shadowOpacity: shadows.deck.opacity,
+              shadowRadius: shadows.deck.radius,
+              elevation: shadows.deck.elevation,
             },
           ]}
         >
@@ -78,11 +81,9 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     height: CARD_HEIGHT,
-    borderRadius: Radius.card,
     borderWidth: StyleSheet.hairlineWidth,
     padding: 16,
     justifyContent: 'center',
-    elevation: 4,
   },
   row: {
     flexDirection: 'row',

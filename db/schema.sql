@@ -14,6 +14,7 @@ create table public.profiles (
   avatar_url text,
   email text not null,
   push_token text,
+  theme text not null default 'lime-noir',
   created_at timestamptz not null default now()
 );
 

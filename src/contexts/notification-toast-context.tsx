@@ -6,6 +6,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ThemedText } from '@/components/themed-text';
 import { useTheme } from '@/hooks/use-theme';
+import { useThemeTokens } from '@/theme/ThemeProvider';
 
 interface ToastData {
   id: number;
@@ -18,6 +19,7 @@ const NotificationToastContext = createContext(null);
 export function NotificationToastProvider({ children }: { children: ReactNode }) {
   const [toast, setToast] = useState<ToastData | null>(null);
   const theme = useTheme();
+  const { shadows } = useThemeTokens();
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
@@ -40,7 +42,18 @@ export function NotificationToastProvider({ children }: { children: ReactNode })
           <Animated.View
             entering={FadeInUp.duration(320)}
             exiting={FadeOutUp.duration(220)}
-            style={[styles.toast, { backgroundColor: theme.backgroundElement, borderColor: theme.border }]}
+            style={[
+              styles.toast,
+              {
+                backgroundColor: theme.backgroundElement,
+                borderColor: theme.border,
+                shadowColor: shadows.toast.color,
+                shadowOpacity: shadows.toast.opacity,
+                shadowRadius: shadows.toast.radius,
+                shadowOffset: shadows.toast.offset,
+                elevation: shadows.toast.elevation,
+              },
+            ]}
           >
             <Pressable onPress={() => setToast(null)}>
               <ThemedText type="smallBold">{toast.title}</ThemedText>
@@ -75,10 +88,5 @@ const styles = StyleSheet.create({
     padding: 14,
     borderRadius: 14,
     borderWidth: StyleSheet.hairlineWidth,
-    shadowColor: '#000000',
-    shadowOpacity: 0.2,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 6,
   },
 });

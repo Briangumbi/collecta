@@ -2,13 +2,14 @@ import { Redirect, Tabs } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { TabBarIcon } from '@/components/tab-bar-icon';
-import { Radius } from '@/constants/theme';
 import { useAuth } from '@/contexts/auth-context';
 import { useTheme } from '@/hooks/use-theme';
+import { useThemeTokens } from '@/theme/ThemeProvider';
 
 export default function FreelancerLayout() {
   const { session, profile } = useAuth();
   const theme = useTheme();
+  const { radius, shadows } = useThemeTokens();
   const insets = useSafeAreaInsets();
 
   if (!session) return <Redirect href="/(auth)/login" />;
@@ -25,14 +26,14 @@ export default function FreelancerLayout() {
           right: 24,
           bottom: insets.bottom + 16,
           height: 64,
-          borderRadius: Radius.pill,
+          borderRadius: radius.pill,
           borderTopWidth: 0,
           backgroundColor: theme.backgroundElement,
-          shadowColor: '#000000',
-          shadowOffset: { width: 0, height: 10 },
-          shadowOpacity: 0.3,
-          shadowRadius: 20,
-          elevation: 10,
+          shadowColor: shadows.tabBar.color,
+          shadowOffset: shadows.tabBar.offset,
+          shadowOpacity: shadows.tabBar.opacity,
+          shadowRadius: shadows.tabBar.radius,
+          elevation: shadows.tabBar.elevation,
         },
         tabBarItemStyle: { height: 64, paddingTop: 0 },
       }}

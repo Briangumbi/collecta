@@ -1,20 +1,8 @@
 /**
- * Learn more about light and dark modes:
- * https://docs.expo.dev/guides/color-schemes/
+ * Re-exported from the multi-theme system so every existing `useTheme()` /
+ * `useThemeScheme()` call site (flat `theme.primary`-style colors) keeps
+ * working unchanged, now backed by the active selected theme instead of a
+ * static palette. New code that needs fonts/radius/shadows/glow should use
+ * `useThemeTokens()` from '@/theme/ThemeProvider' instead.
  */
-
-import { Colors } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
-
-function resolveScheme(scheme: ReturnType<typeof useColorScheme>) {
-  return scheme === 'unspecified' ? 'light' : scheme;
-}
-
-export function useTheme() {
-  return Colors[resolveScheme(useColorScheme())];
-}
-
-/** Resolved 'light' | 'dark' — for tokens (e.g. Glow) that live outside the Colors table. */
-export function useThemeScheme() {
-  return resolveScheme(useColorScheme());
-}
+export { useTheme, useThemeScheme } from '@/theme/ThemeProvider';

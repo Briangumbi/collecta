@@ -9,6 +9,7 @@ import { SettingsToggleRow } from '@/components/settings-row';
 import { TextField } from '@/components/text-field';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
+import { ThemePicker } from '@/components/theme-picker';
 import { useAppLock } from '@/contexts/app-lock-context';
 import { useAuth } from '@/contexts/auth-context';
 import { getSubscription } from '@/lib/queries';
@@ -65,6 +66,13 @@ export default function FreelancerSettingsScreen() {
         </Card>
 
         <ThemedText type="smallBold" style={styles.sectionTitle}>
+          Appearance
+        </ThemedText>
+        <View style={styles.themePickerWrap}>
+          <ThemePicker />
+        </View>
+
+        <ThemedText type="smallBold" style={styles.sectionTitle}>
           Security
         </ThemedText>
         <Card style={styles.card}>
@@ -119,6 +127,9 @@ const styles = StyleSheet.create({
   card: {
     marginBottom: 24,
     gap: 4,
+  },
+  themePickerWrap: {
+    marginBottom: 24,
   },
   planRow: {
     flexDirection: 'row',

@@ -1,11 +1,11 @@
 import { View, type ViewProps } from 'react-native';
 
 import { NoiseOverlay } from '@/components/noise-overlay';
-import { ThemeColor } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
+import type { ThemeColorKey } from '@/theme/tokens';
 
 export type ThemedViewProps = ViewProps & {
-  type?: ThemeColor;
+  type?: ThemeColorKey;
 };
 
 export function ThemedView({ style, type, children, ...otherProps }: ThemedViewProps) {
