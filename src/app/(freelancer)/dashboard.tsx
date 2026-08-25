@@ -1,114 +1,274 @@
+import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
-import { RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
+import { useMemo, useState } from 'react';
+import { Alert, Pressable, RefreshControl, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import Svg, { Line as SvgLine } from 'react-native-svg';
 
 import { ActivityFeed } from '@/components/activity-feed';
 import { AnimatedCounter } from '@/components/animated-counter';
-import { Avatar } from '@/components/avatar';
-import { Card } from '@/components/card';
+import { ClientBalanceCarousel } from '@/components/dashboard/client-balance-carousel';
+import { DashboardInvoiceRow } from '@/components/dashboard/dashboard-invoice-row';
+import { WeekDayStrip } from '@/components/dashboard/week-day-strip';
 import { GlowBackground } from '@/components/glow-background';
+import { IcoBell, IcoCheck, IcoFilter, IcoSearch } from '@/components/icons';
 import { OfflineBanner } from '@/components/offline-banner';
 import { PrimaryButton } from '@/components/primary-button';
 import { RevenueChart } from '@/components/revenue-chart';
-import { StackedInvoiceDeck } from '@/components/stacked-invoice-deck';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { useAuth } from '@/contexts/auth-context';
 import { useCachedQuery } from '@/hooks/use-cached-query';
-import { formatCurrency } from '@/lib/format';
+import { useTheme } from '@/hooks/use-theme';
+import { useThemeTokens } from '@/theme/ThemeProvider';
+import type { ShadowPreset } from '@/theme/tokens';
+import { daysUntil, formatCurrency } from '@/lib/format';
 import { getDashboardSummary, getUpcomingInvoices } from '@/lib/queries';
+
+// Decorative gradient stop for the header avatar only — not a theme token,
+// matching the "always this specific look" treatment used elsewhere (e.g.
+// the virtual card mockup) for a one-off decorative element.
+const AVATAR_GRADIENT_DIM = '#92610a';
 
 export default function DashboardScreen() {
   const { profile } = useAuth();
+  const theme = useTheme();
+  const { radius, fonts, fontSize, cardShadow } = useThemeTokens();
+  const [showSearch, setShowSearch] = useState(false);
   const freelancerId = profile?.id ?? '';
 
   const { data, isLoading, isOffline, refetch } = useCachedQuery(
     `dashboard-summary:${freelancerId}`,
     () => getDashboardSummary(freelancerId)
   );
-  const { data: upcomingInvoices } = useCachedQuery(`upcoming-invoices:${freelancerId}`, () => getUpcomingInvoices(freelancerId));
+  const { data: upcomingInvoices } = useCachedQuery(`upcoming-invoices:${freelancerId}`, () => getUpcomingInvoices(freelancerId, 5));
+
+  const { todayInvoices, laterInvoices } = useMemo(() => {
+    const invoices = upcomingInvoices ?? [];
+    const isUrgent = (inv: (typeof invoices)[number]) => {
+      if (inv.status === 'overdue') return true;
+      const days = daysUntil(inv.due_date);
+      return days !== null && days <= 3;
+    };
+    return { todayInvoices: invoices.filter(isUrgent), laterInvoices: invoices.filter((inv) => !isUrgent(inv)) };
+  }, [upcomingInvoices]);
+
+  const revenueChange = useMemo(() => {
+    const months = data?.revenueByMonth ?? [];
+    const last = months[months.length - 1]?.total ?? 0;
+    const prev = months[months.length - 2]?.total ?? 0;
+    if (prev <= 0) return null;
+    return ((last - prev) / prev) * 100;
+  }, [data?.revenueByMonth]);
 
   if (!profile) return null;
 
   return (
     <ThemedView style={styles.flex}>
       <SafeAreaView style={styles.flex} edges={['top']}>
-        <GlowBackground height={340} cy="6%" />
+        <GlowBackground height={360} cy="-2%" r="70%" />
         <ScrollView
           contentContainerStyle={styles.content}
           refreshControl={<RefreshControl refreshing={isLoading} onRefresh={refetch} />}
         >
           <View style={styles.header}>
-            <View>
-              <ThemedText type="label" themeColor="textSecondary">
+            <LinearGradient
+              colors={[theme.primary, AVATAR_GRADIENT_DIM]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={[
+                styles.avatar,
+                {
+                  borderColor: `${theme.primary}40`,
+                  shadowColor: theme.primary,
+                  shadowOffset: { width: 0, height: 0 },
+                  shadowOpacity: 0.35,
+                  shadowRadius: 16,
+                },
+              ]}
+            >
+              <ThemedText style={{ fontFamily: fonts.display, fontSize: 17, color: theme.background }}>
+                {profile.name.charAt(0).toUpperCase()}
+              </ThemedText>
+            </LinearGradient>
+            <View style={styles.headerText}>
+              <ThemedText type="label" themeColor="textSecondary" style={styles.welcomeLabel}>
                 Welcome back
               </ThemedText>
-              <ThemedText type="title" style={styles.headerName}>
-                {profile.name.split(' ')[0]}
-              </ThemedText>
+              <ThemedText style={{ fontFamily: fonts.display, fontSize: 20, color: theme.text }}>{profile.name}</ThemedText>
             </View>
-            <Avatar name={profile.name} size={48} />
+            <Pressable
+              onPress={() => setShowSearch((v) => !v)}
+              style={[styles.iconButton, { backgroundColor: theme.backgroundElement, borderColor: theme.border }]}
+            >
+              <IcoSearch color={theme.textSecondary} size={18} />
+            </Pressable>
+            <Pressable style={[styles.iconButton, { backgroundColor: theme.backgroundElement, borderColor: theme.border }]}>
+              <IcoBell color={theme.textSecondary} size={18} />
+              {(data?.overdueInvoiceCount ?? 0) > 0 ? (
+                <View style={[styles.bellDot, { backgroundColor: theme.danger, borderColor: theme.background }]} />
+              ) : null}
+            </Pressable>
           </View>
+
+          {showSearch ? (
+            <View style={styles.searchWrap}>
+              <View style={[styles.searchBar, { backgroundColor: theme.backgroundElement, borderColor: theme.border }]}>
+                <IcoSearch color={theme.textSecondary} size={16} />
+                <TextInput
+                  autoFocus
+                  placeholder="Search invoices, clients..."
+                  placeholderTextColor={theme.textSecondary}
+                  style={{ flex: 1, fontSize: fontSize.small, color: theme.text, fontFamily: fonts.sans }}
+                />
+                <IcoFilter color={theme.textSecondary} size={16} />
+              </View>
+            </View>
+          ) : null}
 
           <OfflineBanner visible={isOffline} />
 
-          <Card style={styles.heroCard}>
-            <ThemedText type="label" themeColor="textSecondary">
-              Outstanding
+          <View style={styles.heroWrap}>
+            <ThemedText type="label" themeColor="textSecondary" style={styles.heroLabel}>
+              Outstanding Balance
             </ThemedText>
-            <AnimatedCounter
-              value={data?.outstandingTotal ?? 0}
-              formatter={(n) => formatCurrency(n)}
-              type="hero"
-              themeColor="primary"
-              style={styles.heroValue}
-            />
-          </Card>
-
-          <View style={styles.statsRow}>
-            <Card style={styles.statCard}>
-              <ThemedText type="label" themeColor="textSecondary">
-                Active
-              </ThemedText>
-              <AnimatedCounter value={data?.activeProjectCount ?? 0} type="title" style={styles.statValue} />
-            </Card>
-            <Card style={styles.statCard}>
-              <ThemedText type="label" themeColor="textSecondary">
-                Paid this month
-              </ThemedText>
+            <View style={styles.heroAmountRow}>
+              <ThemedText style={{ fontFamily: fonts.display, fontSize: 18, color: theme.primary, marginTop: 10 }}>$</ThemedText>
               <AnimatedCounter
-                value={data?.paidThisMonth ?? 0}
-                formatter={(n) => formatCurrency(n)}
-                type="title"
-                style={styles.statValue}
-                themeColor="success"
+                value={data?.outstandingTotal ?? 0}
+                formatter={(n) => Math.round(n).toLocaleString()}
+                type="hero"
+                themeColor="primary"
               />
-            </Card>
+            </View>
+            <View style={styles.heroMetaRow}>
+              <View style={[styles.invoiceCountPill, { backgroundColor: theme.warningBg, borderRadius: radius.pill }]}>
+                <ThemedText type="code" themeColor="primary">
+                  {data?.outstandingInvoiceCount ?? 0} invoices
+                </ThemedText>
+              </View>
+              <ThemedText type="small" themeColor="textSecondary">
+                across {data?.outstandingClientCount ?? 0} clients
+              </ThemedText>
+            </View>
+          </View>
+
+          <View style={styles.weekWrap}>
+            <WeekDayStrip />
           </View>
 
           {upcomingInvoices && upcomingInvoices.length > 0 ? (
-            <>
-              <ThemedText type="smallBold" style={styles.sectionTitle}>
-                Upcoming
-              </ThemedText>
-              <StackedInvoiceDeck invoices={upcomingInvoices} />
-            </>
+            <View style={styles.section}>
+              <View style={styles.sectionHeaderRow}>
+                <ThemedText type="smallBold">Client Balances</ThemedText>
+                <Pressable onPress={() => router.push('/(freelancer)/clients')}>
+                  <ThemedText type="small" themeColor="primary">
+                    View all
+                  </ThemedText>
+                </Pressable>
+              </View>
+              <ClientBalanceCarousel invoices={upcomingInvoices.slice(0, 3)} />
+            </View>
           ) : null}
 
-          <Card style={styles.chartCard}>
-            <ThemedText type="smallBold" style={styles.sectionTitle}>
-              Revenue — last 6 months
-            </ThemedText>
-            <RevenueChart data={data?.revenueByMonth ?? []} />
-          </Card>
+          <View style={styles.statsRow}>
+            <View style={[styles.statCard, { backgroundColor: theme.backgroundElement, borderRadius: radius.card }, cardShadowStyle(cardShadow)]}>
+              <ThemedText type="label" themeColor="textSecondary" style={styles.statLabel}>
+                Active Projects
+              </ThemedText>
+              <View style={styles.statValueRow}>
+                <AnimatedCounter value={data?.activeProjectCount ?? 0} style={{ fontFamily: fonts.displayHeavy, fontSize: 44, color: theme.text }} />
+                <View style={[styles.statIconWrap, { backgroundColor: theme.warningBg, borderRadius: 10 }]}>
+                  <Svg width={14} height={14} viewBox="0 0 24 24">
+                    <SvgLine x1={3} y1={6} x2={21} y2={6} stroke={theme.primary} strokeWidth={2.2} strokeLinecap="round" />
+                    <SvgLine x1={3} y1={12} x2={21} y2={12} stroke={theme.primary} strokeWidth={2.2} strokeLinecap="round" />
+                    <SvgLine x1={3} y1={18} x2={15} y2={18} stroke={theme.primary} strokeWidth={2.2} strokeLinecap="round" />
+                  </Svg>
+                </View>
+              </View>
+              <ThemedText type="small" themeColor="textSecondary" style={styles.statFootnote}>
+                {data?.activeProjectCount ?? 0} in progress
+              </ThemedText>
+            </View>
 
-          <View style={styles.quickActions}>
-            <View style={styles.quickActionButton}>
-              <PrimaryButton label="New Invoice" onPress={() => router.push('/(freelancer)/invoices/new')} />
+            <View style={[styles.statCard, { backgroundColor: theme.backgroundElement, borderRadius: radius.card }, cardShadowStyle(cardShadow)]}>
+              <ThemedText type="label" themeColor="textSecondary" style={styles.statLabel}>
+                Paid This Month
+              </ThemedText>
+              <View style={styles.statValueRow}>
+                <AnimatedCounter
+                  value={data?.paidThisMonth ?? 0}
+                  formatter={(n) => formatCurrency(n)}
+                  style={{ fontFamily: fonts.displayHeavy, fontSize: 26, letterSpacing: -0.3, color: theme.success }}
+                />
+                <View style={[styles.statIconWrap, { backgroundColor: theme.successBg, borderRadius: 10 }]}>
+                  <IcoCheck color={theme.success} size={14} />
+                </View>
+              </View>
+              <ThemedText type="small" themeColor="success" style={styles.statFootnote}>
+                This month
+              </ThemedText>
             </View>
-            <View style={styles.quickActionButton}>
-              <PrimaryButton label="New Project" variant="secondary" onPress={() => router.push('/(freelancer)/projects/new')} />
+          </View>
+
+          <View style={[styles.chartCard, { backgroundColor: theme.backgroundElement, borderRadius: radius.card }, cardShadowStyle(cardShadow)]}>
+            <View style={styles.chartHeaderRow}>
+              <View>
+                <ThemedText type="label" themeColor="textSecondary" style={styles.chartLabel}>
+                  Revenue
+                </ThemedText>
+                <ThemedText style={{ fontFamily: fonts.display, fontSize: 18, color: theme.text }}>Last 6 Months</ThemedText>
+              </View>
+              {revenueChange !== null ? (
+                <View style={[styles.changePill, { backgroundColor: theme.successBg, borderRadius: radius.pill }]}>
+                  <ThemedText type="code" themeColor="success">
+                    {revenueChange >= 0 ? '+' : ''}
+                    {revenueChange.toFixed(1)}%
+                  </ThemedText>
+                </View>
+              ) : null}
             </View>
+            <RevenueChart data={data?.revenueByMonth ?? []} />
+          </View>
+
+          {todayInvoices.length > 0 ? (
+            <View style={styles.section}>
+              <View style={styles.sectionHeaderRow}>
+                <ThemedText type="label" themeColor="textSecondary" style={styles.sectionEyebrow}>
+                  Today
+                </ThemedText>
+                <Pressable onPress={() => router.push('/(freelancer)/invoices')}>
+                  <ThemedText type="small" themeColor="primary">
+                    See All
+                  </ThemedText>
+                </Pressable>
+              </View>
+              <View style={styles.rowList}>
+                {todayInvoices.map((inv) => (
+                  <DashboardInvoiceRow key={inv.id} invoice={inv} />
+                ))}
+              </View>
+            </View>
+          ) : null}
+
+          {laterInvoices.length > 0 ? (
+            <View style={styles.section}>
+              <ThemedText type="label" themeColor="textSecondary" style={styles.sectionEyebrow}>
+                Upcoming
+              </ThemedText>
+              <View style={styles.rowList}>
+                {laterInvoices.map((inv) => (
+                  <DashboardInvoiceRow key={inv.id} invoice={inv} />
+                ))}
+              </View>
+            </View>
+          ) : null}
+
+          <View style={styles.ctaWrap}>
+            <PrimaryButton
+              label="Send Payment Reminders"
+              onPress={() => Alert.alert('Coming soon', 'Bulk payment reminders aren’t wired up yet.')}
+            />
           </View>
 
           <ThemedText type="smallBold" style={styles.sectionTitle}>
@@ -121,54 +281,167 @@ export default function DashboardScreen() {
   );
 }
 
+function cardShadowStyle(cardShadow: ShadowPreset) {
+  return {
+    shadowColor: cardShadow.color,
+    shadowOffset: cardShadow.offset,
+    shadowOpacity: cardShadow.opacity,
+    shadowRadius: cardShadow.radius,
+    elevation: cardShadow.elevation,
+  };
+}
+
 const styles = StyleSheet.create({
   flex: { flex: 1 },
   content: {
-    padding: 20,
     paddingBottom: 130,
   },
   header: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 24,
+    gap: 12,
+    paddingHorizontal: 20,
+    paddingTop: 8,
+    paddingBottom: 16,
   },
-  headerName: {
-    fontSize: 30,
-    lineHeight: 36,
-    marginTop: 2,
+  avatar: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
   },
-  heroCard: {
-    marginBottom: 12,
-    paddingVertical: 22,
+  headerText: {
+    flex: 1,
   },
-  heroValue: {
+  welcomeLabel: {
+    marginBottom: 1,
+  },
+  iconButton: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    borderWidth: StyleSheet.hairlineWidth,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  bellDot: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+    width: 7,
+    height: 7,
+    borderRadius: 3.5,
+    borderWidth: 1.5,
+  },
+  searchWrap: {
+    paddingHorizontal: 20,
+    paddingBottom: 12,
+  },
+  searchBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    borderRadius: 14,
+    borderWidth: StyleSheet.hairlineWidth,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+  },
+  heroWrap: {
+    paddingHorizontal: 20,
+    alignItems: 'center',
+  },
+  heroLabel: {
+    marginBottom: 6,
+  },
+  heroAmountRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 2,
+  },
+  heroMetaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
     marginTop: 8,
+  },
+  invoiceCountPill: {
+    paddingHorizontal: 12,
+    paddingVertical: 3,
+  },
+  weekWrap: {
+    marginTop: 18,
+  },
+  section: {
+    paddingHorizontal: 20,
+    marginTop: 20,
+  },
+  sectionHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 12,
+  },
+  sectionEyebrow: {
+    marginBottom: 10,
+  },
+  rowList: {
+    gap: 8,
   },
   statsRow: {
     flexDirection: 'row',
     gap: 12,
-    marginBottom: 20,
+    paddingHorizontal: 20,
+    marginTop: 20,
   },
   statCard: {
     flex: 1,
+    padding: 16,
   },
-  statValue: {
+  statLabel: {
+    marginBottom: 10,
+  },
+  statValueRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    justifyContent: 'space-between',
+  },
+  statIconWrap: {
+    width: 30,
+    height: 30,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 4,
+  },
+  statFootnote: {
     marginTop: 6,
   },
   chartCard: {
-    marginBottom: 28,
-    alignItems: 'flex-start',
+    marginHorizontal: 20,
+    marginTop: 16,
+    padding: 16,
+  },
+  chartHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 16,
+  },
+  chartLabel: {
+    marginBottom: 3,
+  },
+  changePill: {
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+  },
+  ctaWrap: {
+    paddingHorizontal: 20,
+    marginTop: 20,
   },
   sectionTitle: {
+    marginHorizontal: 20,
+    marginTop: 28,
     marginBottom: 12,
-  },
-  quickActions: {
-    flexDirection: 'row',
-    gap: 12,
-    marginBottom: 32,
-  },
-  quickActionButton: {
-    flex: 1,
   },
 });

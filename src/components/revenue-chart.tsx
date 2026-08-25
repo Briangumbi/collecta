@@ -1,33 +1,63 @@
-import { useEffect } from 'react';
-import { StyleSheet, View } from 'react-native';
-import Animated, { useAnimatedProps, useSharedValue, withDelay, withTiming } from 'react-native-reanimated';
-import Svg, { Rect } from 'react-native-svg';
+import { useState } from 'react';
+import { StyleSheet, View, type LayoutChangeEvent } from 'react-native';
+import Svg, { Defs, LinearGradient, Path, Stop } from 'react-native-svg';
 
 import { ThemedText } from '@/components/themed-text';
-import { duration, easing } from '@/animations/easing';
 import { useTheme } from '@/hooks/use-theme';
 
-const AnimatedRect = Animated.createAnimatedComponent(Rect);
+const CHART_HEIGHT = 110;
+const PADDING_TOP = 8;
+const PADDING_BOTTOM = 4;
 
-const CHART_HEIGHT = 120;
-const BAR_WIDTH = 28;
-const GAP = 18;
+/** Smooth line through a set of points, via quadratic curves through each pair's midpoint. */
+function smoothPath(points: { x: number; y: number }[]) {
+  if (points.length < 2) return '';
+  let d = `M ${points[0].x} ${points[0].y}`;
+  for (let i = 1; i < points.length - 1; i++) {
+    const midX = (points[i].x + points[i + 1].x) / 2;
+    const midY = (points[i].y + points[i + 1].y) / 2;
+    d += ` Q ${points[i].x} ${points[i].y} ${midX} ${midY}`;
+  }
+  const last = points[points.length - 1];
+  const secondLast = points[points.length - 2];
+  d += ` Q ${secondLast.x} ${secondLast.y} ${last.x} ${last.y}`;
+  return d;
+}
 
 export function RevenueChart({ data }: { data: { month: string; total: number }[] }) {
   const theme = useTheme();
+  const [width, setWidth] = useState(0);
+
+  const onLayout = (e: LayoutChangeEvent) => setWidth(e.nativeEvent.layout.width);
+
   const max = Math.max(...data.map((d) => d.total), 1);
-  const width = data.length * (BAR_WIDTH + GAP);
+  const points = data.map((d, i) => ({
+    x: data.length > 1 ? (i / (data.length - 1)) * width : width / 2,
+    y: PADDING_TOP + (1 - d.total / max) * (CHART_HEIGHT - PADDING_TOP - PADDING_BOTTOM),
+  }));
+
+  const linePath = smoothPath(points);
+  const areaPath = linePath ? `${linePath} L ${width} ${CHART_HEIGHT} L 0 ${CHART_HEIGHT} Z` : '';
 
   return (
     <View>
-      <Svg width={width} height={CHART_HEIGHT}>
-        {data.map((d, i) => (
-          <Bar key={`${d.month}-${i}`} index={i} value={d.total} max={max} color={theme.primary} />
-        ))}
-      </Svg>
+      <View onLayout={onLayout} style={{ height: CHART_HEIGHT }}>
+        {width > 0 && linePath ? (
+          <Svg width={width} height={CHART_HEIGHT}>
+            <Defs>
+              <LinearGradient id="revenueFill" x1="0" y1="0" x2="0" y2="1">
+                <Stop offset="0%" stopColor={theme.primary} stopOpacity={0.3} />
+                <Stop offset="100%" stopColor={theme.primary} stopOpacity={0.01} />
+              </LinearGradient>
+            </Defs>
+            <Path d={areaPath} fill="url(#revenueFill)" stroke="none" />
+            <Path d={linePath} fill="none" stroke={theme.primary} strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" />
+          </Svg>
+        ) : null}
+      </View>
       <View style={[styles.labels, { width }]}>
         {data.map((d, i) => (
-          <ThemedText key={`${d.month}-${i}`} type="small" themeColor="textSecondary" style={styles.label}>
+          <ThemedText key={`${d.month}-${i}`} type="code" themeColor="textSecondary">
             {d.month}
           </ThemedText>
         ))}
@@ -36,33 +66,10 @@ export function RevenueChart({ data }: { data: { month: string; total: number }[
   );
 }
 
-function Bar({ index, value, max, color }: { index: number; value: number; max: number; color: string }) {
-  const heightPct = useSharedValue(0);
-
-  useEffect(() => {
-    heightPct.value = withDelay(index * 60, withTiming(value / max, { duration: duration.slow, easing: easing.standard }));
-  }, [value, max, index, heightPct]);
-
-  const animatedProps = useAnimatedProps(() => {
-    const h = Math.max(heightPct.value * (CHART_HEIGHT - 8), 2);
-    return {
-      height: h,
-      y: CHART_HEIGHT - h,
-    };
-  });
-
-  const x = index * (BAR_WIDTH + GAP);
-
-  return <AnimatedRect x={x} width={BAR_WIDTH} rx={6} fill={color} animatedProps={animatedProps} />;
-}
-
 const styles = StyleSheet.create({
   labels: {
     flexDirection: 'row',
+    justifyContent: 'space-between',
     marginTop: 8,
-  },
-  label: {
-    width: BAR_WIDTH + GAP,
-    textAlign: 'center',
   },
 });

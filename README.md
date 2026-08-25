@@ -57,7 +57,9 @@ supabase/functions/
    - Already ran an older version of this schema? Run whichever of
      [`db/migrations`](db/migrations) you haven't applied yet, in order — `002` swaps the original
      Stripe field for Flutterwave's, `003` renames those to the processor-neutral `payment_ref` /
-     `payment_transaction_id` used now that payments are simulated.
+     `payment_transaction_id` used now that payments are simulated, `004` adds the `profiles.theme`
+     column for the multi-theme system, `005` renames its default/backfilled value from the retired
+     `lime-noir` theme to `amber-noir`.
 3. Under **Database → Replication**, confirm `activity_events`, `messages`, and `invoices` are in the
    `supabase_realtime` publication (the schema script adds them, but double-check).
 4. Copy your project URL and anon key into `.env` (copy `.env.example` first).

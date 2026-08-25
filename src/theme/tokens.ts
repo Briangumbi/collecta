@@ -50,7 +50,10 @@ export interface ThemeModeTokens {
 
 export interface ThemeFontFamilies {
   sans: string;
+  /** Bold display weight — section headings, mid-size titles. */
   display: string;
+  /** Heaviest display weight — hero figures, the numbers meant to anchor a screen. */
+  displayHeavy: string;
   semibold: string;
   mono: string;
 }

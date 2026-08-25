@@ -8,7 +8,7 @@ import type { ThemeColorKey } from '@/theme/tokens';
  */
 export const InvoiceStatusColor = {
   draft: { fg: 'textSecondary', bg: 'neutralBg' },
-  sent: { fg: 'primary', bg: 'backgroundSelected' },
+  sent: { fg: 'primary', bg: 'warningBg' },
   paid: { fg: 'success', bg: 'successBg' },
   overdue: { fg: 'danger', bg: 'dangerBg' },
 } satisfies Record<string, { fg: ThemeColorKey; bg: ThemeColorKey }>;

@@ -87,7 +87,7 @@ const styles = StyleSheet.create({
     color: '#F5F5F3',
     fontSize: 20,
     letterSpacing: 2,
-    fontFamily: 'Manrope_600SemiBold',
+    fontFamily: 'Outfit_600SemiBold',
   },
   bottomRow: {
     flexDirection: 'row',
@@ -98,13 +98,13 @@ const styles = StyleSheet.create({
     color: '#F5F5F3CC',
     fontSize: 13,
     letterSpacing: 1,
-    fontFamily: 'Manrope_600SemiBold',
+    fontFamily: 'Outfit_600SemiBold',
     flex: 1,
     marginRight: 12,
   },
   expiry: {
     color: '#F5F5F3CC',
     fontSize: 13,
-    fontFamily: 'Manrope_600SemiBold',
+    fontFamily: 'Outfit_600SemiBold',
   },
 });

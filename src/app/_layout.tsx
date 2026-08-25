@@ -1,12 +1,8 @@
 import '@/global.css';
 
-import {
-  Manrope_500Medium,
-  Manrope_600SemiBold,
-  Manrope_700Bold,
-  Manrope_800ExtraBold,
-  useFonts,
-} from '@expo-google-fonts/manrope';
+import { DMMono_500Medium } from '@expo-google-fonts/dm-mono';
+import { Fraunces_700Bold, Fraunces_900Black } from '@expo-google-fonts/fraunces';
+import { Outfit_400Regular, Outfit_600SemiBold, useFonts } from '@expo-google-fonts/outfit';
 import { Stack, ThemeProvider as NavigationThemeProvider, type Theme } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect, useMemo } from 'react';
@@ -25,10 +21,11 @@ SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
   const [fontsLoaded] = useFonts({
-    Manrope_500Medium,
-    Manrope_600SemiBold,
-    Manrope_700Bold,
-    Manrope_800ExtraBold,
+    Outfit_400Regular,
+    Outfit_600SemiBold,
+    Fraunces_700Bold,
+    Fraunces_900Black,
+    DMMono_500Medium,
   });
 
   if (!fontsLoaded) return null;
@@ -65,10 +62,10 @@ function NavThemeBridge({ children }: { children: React.ReactNode }) {
         notification: theme.danger,
       },
       fonts: {
-        regular: { fontFamily: 'Manrope_500Medium', fontWeight: '500' },
-        medium: { fontFamily: 'Manrope_600SemiBold', fontWeight: '600' },
-        bold: { fontFamily: 'Manrope_700Bold', fontWeight: '700' },
-        heavy: { fontFamily: 'Manrope_800ExtraBold', fontWeight: '800' },
+        regular: { fontFamily: 'Outfit_400Regular', fontWeight: '400' },
+        medium: { fontFamily: 'Outfit_600SemiBold', fontWeight: '600' },
+        bold: { fontFamily: 'Fraunces_700Bold', fontWeight: '700' },
+        heavy: { fontFamily: 'Fraunces_900Black', fontWeight: '900' },
       },
     }),
     [theme, scheme]

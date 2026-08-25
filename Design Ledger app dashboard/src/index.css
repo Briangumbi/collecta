@@ -1,0 +1,85 @@
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,700;9..144,900&family=Outfit:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap');
+@import 'tailwindcss';
+
+@theme inline {
+  --color-amber-glow: #f59e0b;
+  --color-amber-dim: #92610a;
+  --color-warm-black: #13100c;
+  --color-warm-card: #1c1710;
+  --color-warm-card-raised: #231d14;
+  --color-warm-muted: #6b5a42;
+  --color-warm-border: rgba(245, 158, 11, 0.08);
+  --color-sage-green: #5cb88a;
+}
+
+* {
+  box-sizing: border-box;
+  -webkit-font-smoothing: antialiased;
+}
+
+html, body, #root {
+  height: 100%;
+  width: 100%;
+}
+
+::-webkit-scrollbar {
+  display: none;
+}
+
+body {
+  background-color: #13100c;
+  font-family: 'Outfit', sans-serif;
+}
+
+.grain-overlay {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 100;
+  opacity: 0.028;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  background-size: 256px 256px;
+}
+
+.amber-glow {
+  background: radial-gradient(ellipse 80% 50% at 50% -10%, rgba(245, 158, 11, 0.22) 0%, transparent 70%);
+}
+
+.card-shadow {
+  box-shadow:
+    0 1px 0 0 rgba(255, 255, 255, 0.04) inset,
+    0 4px 24px 0 rgba(0, 0, 0, 0.45),
+    0 1px 4px 0 rgba(0, 0, 0, 0.3);
+}
+
+.card-shadow-raised {
+  box-shadow:
+    0 1px 0 0 rgba(255, 255, 255, 0.06) inset,
+    0 8px 40px 0 rgba(0, 0, 0, 0.55),
+    0 2px 8px 0 rgba(0, 0, 0, 0.4),
+    0 0 0 1px rgba(245, 158, 11, 0.1);
+}
+
+.pill-button {
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.14) 0%,
+    rgba(255, 255, 255, 0.02) 100%
+  ),
+  #f59e0b;
+  box-shadow:
+    0 1px 0 0 rgba(255, 255, 255, 0.25) inset,
+    0 4px 16px 0 rgba(245, 158, 11, 0.35);
+}
+
+.pill-button:active {
+  transform: scale(0.97);
+  box-shadow:
+    0 0 0 0 rgba(255, 255, 255, 0.1) inset,
+    0 2px 8px 0 rgba(245, 158, 11, 0.25);
+}
+
+.tab-glow {
+  filter: drop-shadow(0 0 8px rgba(245, 158, 11, 0.7));
+}

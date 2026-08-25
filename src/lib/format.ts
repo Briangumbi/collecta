@@ -10,3 +10,18 @@ export function formatDate(iso: string | null) {
 export function formatDateTime(iso: string) {
   return new Date(iso).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
 }
+
+/** Cosmetic short reference derived from the invoice's UUID — there's no separate invoice-number field. */
+export function formatInvoiceRef(id: string) {
+  return `INV-${id.replace(/-/g, '').slice(0, 4).toUpperCase()}`;
+}
+
+/** Days until (positive) or since (negative) an ISO date, ignoring time-of-day. */
+export function daysUntil(iso: string | null) {
+  if (!iso) return null;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const target = new Date(iso);
+  target.setHours(0, 0, 0, 0);
+  return Math.round((target.getTime() - today.getTime()) / 86_400_000);
+}

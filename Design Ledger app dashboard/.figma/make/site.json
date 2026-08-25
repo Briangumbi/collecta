@@ -1,0 +1,10 @@
+{
+  "description": "Track clients, invoices, and payments with a sleek dashboard designed for freelancers to manage billing efficiently and monitor financial stats at a glance.",
+  "robots": {
+    "index": false
+  },
+  "accessibility": {
+    "addBypassLinks": false,
+    "ignoreReducedMotion": false
+  }
+}

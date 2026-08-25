@@ -7,6 +7,9 @@ import type { ActivityEvent, Attachment, Invoice, Message, Milestone, Profile, P
 
 export interface DashboardSummary {
   outstandingTotal: number;
+  outstandingInvoiceCount: number;
+  outstandingClientCount: number;
+  overdueInvoiceCount: number;
   activeProjectCount: number;
   paidThisMonth: number;
   revenueByMonth: { month: string; total: number }[];
@@ -15,7 +18,7 @@ export interface DashboardSummary {
 export async function getDashboardSummary(freelancerId: string): Promise<DashboardSummary> {
   const { data: invoices, error: invoicesError } = await supabase
     .from('invoices')
-    .select('amount, status, paid_at')
+    .select('amount, status, paid_at, client_id')
     .eq('freelancer_id', freelancerId);
   if (invoicesError) throw invoicesError;
 
@@ -30,12 +33,18 @@ export async function getDashboardSummary(freelancerId: string): Promise<Dashboa
   const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
 
   let outstandingTotal = 0;
+  let outstandingInvoiceCount = 0;
+  let overdueInvoiceCount = 0;
+  const outstandingClientIds = new Set<string>();
   let paidThisMonth = 0;
   const monthTotals = new Map<string, number>();
 
   for (const inv of invoices ?? []) {
     if (inv.status === 'sent' || inv.status === 'overdue') {
       outstandingTotal += Number(inv.amount);
+      outstandingInvoiceCount += 1;
+      outstandingClientIds.add(inv.client_id);
+      if (inv.status === 'overdue') overdueInvoiceCount += 1;
     }
     if (inv.status === 'paid' && inv.paid_at) {
       const paidDate = new Date(inv.paid_at);
@@ -54,6 +63,9 @@ export async function getDashboardSummary(freelancerId: string): Promise<Dashboa
 
   return {
     outstandingTotal,
+    outstandingInvoiceCount,
+    outstandingClientCount: outstandingClientIds.size,
+    overdueInvoiceCount,
     activeProjectCount: activeProjectCount ?? 0,
     paidThisMonth,
     revenueByMonth,
@@ -129,6 +141,7 @@ export async function getClientDetail(clientId: string) {
 
 export interface InvoiceWithClient extends Invoice {
   client: Pick<Profile, 'id' | 'name' | 'avatar_url'> | null;
+  project?: Pick<Project, 'id' | 'title'> | null;
 }
 
 export async function getInvoices(freelancerId: string): Promise<InvoiceWithClient[]> {
@@ -149,7 +162,7 @@ export async function getInvoices(freelancerId: string): Promise<InvoiceWithClie
   return (invoices ?? []).map((inv) => ({ ...inv, client: byId.get(inv.client_id) ?? null }));
 }
 
-/** Top outstanding invoices, soonest due first — feeds the dashboard's stacked-card deck. */
+/** Top outstanding invoices, soonest due first — feeds the dashboard's client-balance carousel and invoice rows. */
 export async function getUpcomingInvoices(freelancerId: string, limit = 3): Promise<InvoiceWithClient[]> {
   const { data: invoices, error } = await supabase
     .from('invoices')
@@ -161,13 +174,21 @@ export async function getUpcomingInvoices(freelancerId: string, limit = 3): Prom
   if (error) throw error;
 
   const clientIds = Array.from(new Set((invoices ?? []).map((i) => i.client_id)));
-  const { data: clients, error: clientsError } = clientIds.length
-    ? await supabase.from('profiles').select('id, name, avatar_url').in('id', clientIds)
-    : { data: [], error: null };
+  const projectIds = Array.from(new Set((invoices ?? []).map((i) => i.project_id).filter((id): id is string => id !== null)));
+  const [{ data: clients, error: clientsError }, { data: projects, error: projectsError }] = await Promise.all([
+    clientIds.length ? supabase.from('profiles').select('id, name, avatar_url').in('id', clientIds) : Promise.resolve({ data: [], error: null }),
+    projectIds.length ? supabase.from('projects').select('id, title').in('id', projectIds) : Promise.resolve({ data: [], error: null }),
+  ]);
   if (clientsError) throw clientsError;
+  if (projectsError) throw projectsError;
 
-  const byId = new Map((clients ?? []).map((c) => [c.id, c]));
-  return (invoices ?? []).map((inv) => ({ ...inv, client: byId.get(inv.client_id) ?? null }));
+  const clientById = new Map((clients ?? []).map((c) => [c.id, c]));
+  const projectById = new Map((projects ?? []).map((p) => [p.id, p]));
+  return (invoices ?? []).map((inv) => ({
+    ...inv,
+    client: clientById.get(inv.client_id) ?? null,
+    project: inv.project_id ? (projectById.get(inv.project_id) ?? null) : null,
+  }));
 }
 
 export async function getInvoiceDetail(id: string) {
