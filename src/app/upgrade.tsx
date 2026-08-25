@@ -1,30 +1,27 @@
 import { Ionicons } from '@expo/vector-icons';
-import { router, useLocalSearchParams } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { router } from 'expo-router';
+import { useState } from 'react';
 import { ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View } from 'react-native';
 
-import { GlowBackground } from '@/components/glow-background';
 import { PaymentSuccessOverlay } from '@/components/payment-success-overlay';
 import { PrimaryButton } from '@/components/primary-button';
 import { TextField } from '@/components/text-field';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { VirtualCardPreview } from '@/components/virtual-card-preview';
-import { useSimulatedPayment } from '@/hooks/use-simulated-payment';
+import { useAuth } from '@/contexts/auth-context';
+import { useSimulatedUpgrade } from '@/hooks/use-simulated-upgrade';
 import { useTheme } from '@/hooks/use-theme';
 import { formatCardNumber, formatExpiry, isCardNumberValid, isCvcValid, isExpiryValid } from '@/lib/card-format';
-import { formatCurrency } from '@/lib/format';
-import { getInvoiceDetail } from '@/lib/queries';
-import type { Invoice } from '@/types/database';
 
 type Phase = 'form' | 'processing' | 'success' | 'declined';
 
-export default function PayInvoiceScreen() {
-  const { id } = useLocalSearchParams<{ id: string }>();
-  const { pay } = useSimulatedPayment();
+const PRO_PRICE_LABEL = '$15/month';
+
+export default function UpgradeScreen() {
+  const { profile } = useAuth();
+  const { upgrade } = useSimulatedUpgrade();
   const theme = useTheme();
 
-  const [invoice, setInvoice] = useState<Invoice | null>(null);
   const [phase, setPhase] = useState<Phase>('form');
   const [declineReason, setDeclineReason] = useState('');
 
@@ -33,18 +30,13 @@ export default function PayInvoiceScreen() {
   const [expiry, setExpiry] = useState('');
   const [cvc, setCvc] = useState('');
 
-  useEffect(() => {
-    if (!id) return;
-    getInvoiceDetail(id).then((result) => setInvoice(result.invoice));
-  }, [id]);
-
   const isFormValid = name.trim().length > 1 && isCardNumberValid(cardNumber) && isExpiryValid(expiry) && isCvcValid(cvc);
 
   const handleSubmit = async () => {
-    if (!invoice) return;
+    if (!profile) return;
     setPhase('processing');
     try {
-      const outcome = await pay(invoice.id, cardNumber);
+      const outcome = await upgrade(profile.id, cardNumber);
       if (outcome.status === 'success') {
         setPhase('success');
       } else {
@@ -57,19 +49,12 @@ export default function PayInvoiceScreen() {
     }
   };
 
-  if (!invoice) {
-    return (
-      <ThemedView style={styles.center}>
-        <ActivityIndicator />
-      </ThemedView>
-    );
-  }
-
   if (phase === 'success') {
     return (
       <PaymentSuccessOverlay
-        message={`${formatCurrency(Number(invoice.amount), invoice.currency)} sent`}
-        onDone={() => router.replace(`/(client)/invoices/${invoice.id}`)}
+        title="You're on Pro"
+        message="Unlimited clients & invoices, unlocked."
+        onDone={() => router.back()}
       />
     );
   }
@@ -88,7 +73,7 @@ export default function PayInvoiceScreen() {
   if (phase === 'declined') {
     return (
       <ThemedView style={styles.center}>
-        <View style={[styles.declineIcon, { backgroundColor: theme.dangerBg, borderColor: theme.border }]}>
+        <View style={[styles.declineIcon, { backgroundColor: theme.dangerBg }]}>
           <Ionicons name="close" size={40} color={theme.danger} />
         </View>
         <ThemedText type="subtitle" style={styles.declineTitle}>
@@ -106,17 +91,14 @@ export default function PayInvoiceScreen() {
 
   return (
     <ThemedView style={styles.flex}>
-      <GlowBackground width={480} height={260} cy="-4%" r="55%" />
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.flex}>
         <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-          <ThemedText type="hero" themeColor="primary" style={styles.amount}>
-            {formatCurrency(Number(invoice.amount), invoice.currency)}
+          <ThemedText type="title" style={styles.amount}>
+            {PRO_PRICE_LABEL}
           </ThemedText>
           <ThemedText type="small" themeColor="textSecondary" style={styles.subtitle}>
             Enter any card details — this is a simulated payment, no real card is charged.
           </ThemedText>
-
-          <VirtualCardPreview name={name} number={cardNumber} expiry={expiry} />
 
           <TextField label="Cardholder name" value={name} onChangeText={setName} placeholder="Jane Whitfield" autoCapitalize="words" />
           <TextField
@@ -155,11 +137,7 @@ export default function PayInvoiceScreen() {
             Tip: a card number ending in 0000 always simulates a decline.
           </ThemedText>
 
-          <PrimaryButton
-            label={`Pay ${formatCurrency(Number(invoice.amount), invoice.currency)}`}
-            onPress={handleSubmit}
-            disabled={!isFormValid}
-          />
+          <PrimaryButton label={`Upgrade for ${PRO_PRICE_LABEL}`} onPress={handleSubmit} disabled={!isFormValid} />
         </ScrollView>
       </KeyboardAvoidingView>
     </ThemedView>
@@ -174,12 +152,14 @@ const styles = StyleSheet.create({
     paddingBottom: 60,
   },
   amount: {
+    fontSize: 34,
+    lineHeight: 40,
     textAlign: 'center',
     marginBottom: 8,
   },
   subtitle: {
     textAlign: 'center',
-    marginBottom: 24,
+    marginBottom: 28,
   },
   row: {
     flexDirection: 'row',
@@ -199,7 +179,6 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 40,
-    borderWidth: StyleSheet.hairlineWidth,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 20,

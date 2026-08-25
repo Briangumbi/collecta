@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react';
+import { router, useFocusEffect } from 'expo-router';
+import { useCallback, useState } from 'react';
 import { Alert, ScrollView, StyleSheet, View } from 'react-native';
 
 import { Avatar } from '@/components/avatar';
@@ -21,9 +22,11 @@ export default function FreelancerSettingsScreen() {
   const [saving, setSaving] = useState(false);
   const [subscription, setSubscription] = useState<Subscription | null>(null);
 
-  useEffect(() => {
-    if (profile) getSubscription(profile.id).then(setSubscription);
-  }, [profile]);
+  useFocusEffect(
+    useCallback(() => {
+      if (profile) getSubscription(profile.id).then(setSubscription);
+    }, [profile])
+  );
 
   if (!profile) return null;
 
@@ -87,7 +90,7 @@ export default function FreelancerSettingsScreen() {
                 {subscription?.plan === 'pro' ? 'Unlimited clients & invoices' : 'Up to 3 active clients'}
               </ThemedText>
             </View>
-            {subscription?.plan !== 'pro' ? <PrimaryButton label="Upgrade" onPress={() => {}} /> : null}
+            {subscription?.plan !== 'pro' ? <PrimaryButton label="Upgrade" onPress={() => router.push('/upgrade')} /> : null}
           </View>
         </Card>
 

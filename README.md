@@ -142,8 +142,12 @@ with EAS.
 
 - **Payments**: simulated end-to-end, deliberately — see [Payments](#4-payments--simulated) above for
   why and what a real integration would change.
-- **Subscriptions**: the `subscriptions` table and the Free/Pro plan display in Settings are wired up
-  for reads; the "Upgrade" button is a placeholder — left out of scope for the payments work.
+- **Subscriptions**: the "Upgrade" button in Settings now runs the same simulated-payment pattern as
+  invoice payments — see [`upgrade.tsx`](src/app/upgrade.tsx) and
+  [`use-simulated-upgrade.ts`](src/hooks/use-simulated-upgrade.ts). It skips the Edge Function step,
+  though: unlike `invoices`, RLS already lets a freelancer write their own `subscriptions` row directly
+  (`subscriptions_all_freelancer` in [`db/schema.sql`](db/schema.sql)), so there's no privileged write
+  to broker server-side.
 - **Deliverable attachments**: the upload path (camera/library → Supabase Storage) is shared between
   receipts and deliverables; the project Files tab currently only exposes the receipt-scan flow from
   the freelancer side.

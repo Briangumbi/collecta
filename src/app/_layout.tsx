@@ -16,6 +16,7 @@ import { AppLockProvider } from '@/contexts/app-lock-context';
 import { AuthProvider, useAuth } from '@/contexts/auth-context';
 import { NotificationToastProvider } from '@/contexts/notification-toast-context';
 import { Colors } from '@/constants/theme';
+import { useTheme } from '@/hooks/use-theme';
 import { registerForPushNotifications } from '@/lib/notifications';
 
 SplashScreen.preventAutoHideAsync();
@@ -77,6 +78,7 @@ export default function RootLayout() {
 
 function RootNavigator() {
   const { isLoading, session } = useAuth();
+  const theme = useTheme();
 
   useEffect(() => {
     if (!isLoading) SplashScreen.hideAsync();
@@ -91,7 +93,19 @@ function RootNavigator() {
   return (
     <NotificationToastProvider>
       <View style={{ flex: 1 }}>
-        <Stack screenOptions={{ headerShown: false }} />
+        <Stack screenOptions={{ headerShown: false }}>
+          <Stack.Screen
+            name="upgrade"
+            options={{
+              presentation: 'modal',
+              headerShown: true,
+              title: 'Upgrade to Pro',
+              headerStyle: { backgroundColor: theme.background },
+              headerTintColor: theme.text,
+              headerShadowVisible: false,
+            }}
+          />
+        </Stack>
         <LockScreen />
       </View>
     </NotificationToastProvider>

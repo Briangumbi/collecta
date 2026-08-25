@@ -10,7 +10,13 @@ import { ThemedText } from '@/components/themed-text';
 import { springs } from '@/animations/easing';
 import { useTheme } from '@/hooks/use-theme';
 
-export function PaymentSuccessOverlay({ amountLabel, onDone }: { amountLabel: string; onDone: () => void }) {
+interface PaymentSuccessOverlayProps {
+  title?: string;
+  message: string;
+  onDone: () => void;
+}
+
+export function PaymentSuccessOverlay({ title = 'Payment successful', message, onDone }: PaymentSuccessOverlayProps) {
   const theme = useTheme();
   const scale = useSharedValue(0);
   const opacity = useSharedValue(0);
@@ -41,10 +47,10 @@ export function PaymentSuccessOverlay({ amountLabel, onDone }: { amountLabel: st
         </View>
       </Animated.View>
       <ThemedText type="title" style={styles.title}>
-        Payment successful
+        {title}
       </ThemedText>
       <ThemedText type="default" themeColor="textSecondary" style={styles.subtitle}>
-        {amountLabel} sent
+        {message}
       </ThemedText>
       <View style={styles.buttonWrap}>
         <PrimaryButton label="Done" onPress={onDone} />
