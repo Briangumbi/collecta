@@ -203,6 +203,17 @@ export function IcoEye({ color, size }: IconProps) {
   );
 }
 
+export function IcoRepeat({ color, size }: IconProps) {
+  return (
+    <Svg {...base(color, size)}>
+      <Path d="M17 1l4 4-4 4" />
+      <Path d="M3 11V9a4 4 0 0 1 4-4h14" />
+      <Path d="M7 23l-4-4 4-4" />
+      <Path d="M21 13v2a4 4 0 0 1-4 4H3" />
+    </Svg>
+  );
+}
+
 export function IcoEyeOff({ color, size }: IconProps) {
   return (
     <Svg {...base(color, size)}>

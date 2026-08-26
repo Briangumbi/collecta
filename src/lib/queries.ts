@@ -1,5 +1,16 @@
 import { supabase } from '@/lib/supabase';
-import type { ActivityEvent, Attachment, Invoice, Message, Milestone, Profile, Project, Subscription } from '@/types/database';
+import type {
+  ActivityEvent,
+  Attachment,
+  Invoice,
+  InvoiceTemplate,
+  Message,
+  Milestone,
+  Profile,
+  Project,
+  RecurringInterval,
+  Subscription,
+} from '@/types/database';
 
 // ---------------------------------------------------------------------------
 // Freelancer — dashboard
@@ -287,6 +298,74 @@ export async function markInvoicePaidManually(id: string) {
 
 export async function markInvoiceSent(id: string) {
   const { error } = await supabase.from('invoices').update({ status: 'sent' }).eq('id', id);
+  if (error) throw error;
+}
+
+// ---------------------------------------------------------------------------
+// Freelancer — recurring invoices (invoice_templates)
+// ---------------------------------------------------------------------------
+
+export interface InvoiceTemplateWithClient extends InvoiceTemplate {
+  client: Pick<Profile, 'id' | 'name' | 'avatar_url'> | null;
+  project?: Pick<Project, 'id' | 'title'> | null;
+}
+
+export async function getInvoiceTemplates(freelancerId: string): Promise<InvoiceTemplateWithClient[]> {
+  const { data: templates, error } = await supabase
+    .from('invoice_templates')
+    .select('*')
+    .eq('freelancer_id', freelancerId)
+    .order('created_at', { ascending: false });
+  if (error) throw error;
+
+  const rows = templates ?? [];
+  const clientIds = Array.from(new Set(rows.map((t) => t.client_id)));
+  const projectIds = Array.from(new Set(rows.map((t) => t.project_id).filter((id): id is string => id !== null)));
+  const [{ data: clients, error: clientsError }, { data: projects, error: projectsError }] = await Promise.all([
+    clientIds.length ? supabase.from('profiles').select('id, name, avatar_url').in('id', clientIds) : Promise.resolve({ data: [], error: null }),
+    projectIds.length ? supabase.from('projects').select('id, title').in('id', projectIds) : Promise.resolve({ data: [], error: null }),
+  ]);
+  if (clientsError) throw clientsError;
+  if (projectsError) throw projectsError;
+
+  const clientById = new Map((clients ?? []).map((c) => [c.id, c]));
+  const projectById = new Map((projects ?? []).map((p) => [p.id, p]));
+  return rows.map((t) => ({
+    ...t,
+    client: clientById.get(t.client_id) ?? null,
+    project: t.project_id ? (projectById.get(t.project_id) ?? null) : null,
+  }));
+}
+
+export async function createInvoiceTemplate(input: {
+  freelancerId: string;
+  clientId: string;
+  projectId: string | null;
+  amount: number;
+  interval: RecurringInterval;
+  /** First date the recurring invoice should be generated on. */
+  startDate: string;
+  dueInDays?: number;
+}) {
+  const { error } = await supabase.from('invoice_templates').insert({
+    freelancer_id: input.freelancerId,
+    client_id: input.clientId,
+    project_id: input.projectId,
+    amount: input.amount,
+    interval: input.interval,
+    next_run_date: input.startDate,
+    due_in_days: input.dueInDays ?? 14,
+  });
+  if (error) throw error;
+}
+
+export async function setInvoiceTemplateActive(id: string, active: boolean) {
+  const { error } = await supabase.from('invoice_templates').update({ active }).eq('id', id);
+  if (error) throw error;
+}
+
+export async function deleteInvoiceTemplate(id: string) {
+  const { error } = await supabase.from('invoice_templates').delete().eq('id', id);
   if (error) throw error;
 }
 

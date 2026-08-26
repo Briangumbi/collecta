@@ -3,7 +3,7 @@ import { useMemo, useState } from 'react';
 import { Pressable, RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
 
 import { GlowBackground } from '@/components/glow-background';
-import { IcoChevronRight } from '@/components/icons';
+import { IcoChevronRight, IcoRepeat } from '@/components/icons';
 import { OfflineBanner } from '@/components/offline-banner';
 import { PillActionButton } from '@/components/pill-action-button';
 import { ScreenHeader } from '@/components/screen-header';
@@ -51,7 +51,20 @@ export default function InvoicesScreen() {
         contentContainerStyle={styles.content}
         refreshControl={<RefreshControl refreshing={isLoading} onRefresh={refetch} />}
       >
-        <ScreenHeader title="Invoices" action={<PillActionButton label="New" onPress={() => router.push('/(freelancer)/invoices/new')} />} />
+        <ScreenHeader
+          title="Invoices"
+          action={
+            <View style={styles.headerActions}>
+              <Pressable
+                onPress={() => router.push('/(freelancer)/invoices/recurring')}
+                style={[styles.iconButton, { backgroundColor: theme.backgroundElement, borderColor: theme.border }]}
+              >
+                <IcoRepeat color={theme.textSecondary} size={16} />
+              </Pressable>
+              <PillActionButton label="New" onPress={() => router.push('/(freelancer)/invoices/new')} />
+            </View>
+          }
+        />
 
         <OfflineBanner visible={isOffline} />
 
@@ -136,9 +149,12 @@ function InvoiceListItem({ invoice }: { invoice: InvoiceWithClient }) {
             </ThemedText>
           </View>
           <View style={styles.info}>
-            <ThemedText type="smallBold" numberOfLines={1}>
-              {clientName}
-            </ThemedText>
+            <View style={styles.nameRow}>
+              <ThemedText type="smallBold" numberOfLines={1}>
+                {clientName}
+              </ThemedText>
+              {invoice.template_id ? <IcoRepeat color={theme.textSecondary} size={11} /> : null}
+            </View>
             <View style={styles.metaRow}>
               <ThemedText type="code" themeColor="textSecondary">
                 {formatInvoiceRef(invoice.id)}
@@ -172,6 +188,19 @@ const styles = StyleSheet.create({
   flex: { flex: 1 },
   content: {
     paddingBottom: 160,
+  },
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  iconButton: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    borderWidth: StyleSheet.hairlineWidth,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   statsRow: {
     flexDirection: 'row',
@@ -221,6 +250,11 @@ const styles = StyleSheet.create({
   info: {
     flex: 1,
     minWidth: 0,
+  },
+  nameRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
   },
   metaRow: {
     flexDirection: 'row',

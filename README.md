@@ -35,7 +35,10 @@ client**, or ask a freelancer account to add you.
   balances, today/upcoming invoices, search + overdue filter, one-tap "Send Payment Reminders."
 - **Clients** — list with outstanding totals, add new (creates a real linked account via an Edge
   Function), per-client detail with balance and invoice history.
-- **Invoices** — list filterable by draft/sent/paid/overdue, detail view, payment reminders.
+- **Invoices** — list filterable by draft/sent/paid/overdue, detail view, payment reminders,
+  recurring invoices (save a template — weekly/monthly/quarterly/yearly — and it generates a real
+  invoice on schedule with no app or server needing to be open; see
+  [Recurring invoices](#6-recurring-invoices) below).
 - **Projects** — list with progress rings, milestones, and status (active / on hold / completed).
 - **Messaging** — realtime per-project thread with the client.
 - **Settings** — profile, multi-theme picker (Amber Noir / Dark Cool / Light, each dark+light aware),
@@ -225,6 +228,25 @@ service-role key Supabase injects automatically.
 Push tokens only register on a physical device (not the simulator/emulator) and require an
 [EAS project ID](https://docs.expo.dev/push-notifications/push-notifications-setup/) once you build
 with EAS.
+
+### 6. Recurring invoices
+
+Handled entirely in Postgres via [`pg_cron`](https://github.com/citusdata/pg_cron) — no Edge Function
+or external scheduler needed, so it keeps running even if nothing client-side is ever open. Enabled
+by [`db/migrations/008_recurring_invoices.sql`](db/migrations/008_recurring_invoices.sql) (already
+part of `db/schema.sql` for fresh installs), which:
+
+1. Adds `invoice_templates` (a saved recurring schedule — client, amount, interval, next run date)
+   and `invoices.template_id` (set on invoices a template generated, for the UI's "recurring" badge).
+2. Defines `generate_recurring_invoices()`, a `security definer` function that inserts a new invoice
+   for every template due to run, then advances that template's `next_run_date`.
+3. Schedules it via `cron.schedule('generate-recurring-invoices', '0 6 * * *', ...)` — daily at 06:00
+   UTC.
+
+`pg_cron` needs to be enabled on the project (`create extension pg_cron`) — available on every
+Supabase plan including Free, but confirm it under **Database → Extensions** if the schedule doesn't
+seem to be firing. To generate due invoices immediately instead of waiting for the next cron tick
+(e.g. while testing), run `select public.generate_recurring_invoices();` directly in the SQL editor.
 
 ## Build & distribution
 
