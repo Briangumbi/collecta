@@ -7,6 +7,59 @@ and **Client** (scoped read-only + payment view).
 Built with Expo (React Native + TypeScript) and Supabase (Postgres, Auth, Row Level Security,
 Realtime). Invoice payments are **simulated** — see [Payments](#4-payments--simulated) below for why.
 
+## Preview the app
+
+```bash
+npx expo start
+```
+
+- **Web** — press `w`, or open `http://localhost:8081` directly. Fastest way to look at something
+  without any native toolchain installed.
+- **iOS Simulator** — press `i` (needs Xcode on macOS), or scan the QR with the **Expo Go** app on a
+  physical device for a quick look (native modules that need a real dev build — biometrics, camera —
+  won't work in Expo Go).
+- **Android emulator/device** — press `a` (needs Android Studio), or scan the QR with Expo Go.
+
+**Log in without creating an account**: tap **Continue as demo freelancer** on the login screen, or
+sign in directly with `demo@ledgerapp.dev` / `ledger-demo-2026` (seeded — see
+[Seed demo data](#3-seed-demo-data)). To see the client-side view, sign up fresh and pick **I'm a
+client**, or ask a freelancer account to add you.
+
+## Features
+
+**Freelancer side**
+- **Dashboard** — outstanding balance as a gradient hero card with a tap-to-hide toggle (masks the
+  figure to `••••••` if someone's looking over your shoulder), a 6-month revenue chart, client
+  balances, today/upcoming invoices, search + overdue filter, one-tap "Send Payment Reminders."
+- **Clients** — list with outstanding totals, add new (creates a real linked account via an Edge
+  Function), per-client detail with balance and invoice history.
+- **Invoices** — list filterable by draft/sent/paid/overdue, detail view, payment reminders.
+- **Projects** — list with progress rings, milestones, and status (active / on hold / completed).
+- **Messaging** — realtime per-project thread with the client.
+- **Settings** — profile, multi-theme picker (Amber Noir / Dark Cool / Light, each dark+light aware),
+  biometric app-lock, notification preferences, simulated Pro subscription/upgrade, email & password,
+  Privacy & Data (real data counts + account deletion), Legal (Privacy Policy / Terms of Service).
+
+**Client side**
+- Scoped read-only view of the projects and invoices a freelancer has shared, realtime messaging, and
+  a simulated card-entry payment flow — see [Payments](#4-payments--simulated).
+- Its own Settings: profile, biometric lock, Privacy & Data, account deletion, Legal.
+
+**Security & privacy**
+- Row Level Security on every table; a `freelancer_clients_insert` / `projects_all_freelancer` /
+  `invoices_all_freelancer` / `subscriptions_all_freelancer` policy set that checks actual role via
+  `is_freelancer()`, not just row ownership.
+- Column-level `GRANT`s on `profiles` so a user can update their own name/avatar/theme/prefs but can't
+  self-elevate `role` through the same endpoint (`WITH CHECK` alone can't block that — see
+  [`db/migrations/007_security_hardening.sql`](db/migrations/007_security_hardening.sql)).
+- Real account deletion (not just sign-out): an Edge Function using the admin API, relying on
+  cascading FKs to remove everything owned by the account — see
+  [`delete-account`](supabase/functions/delete-account/index.ts).
+- A stale/orphaned local session (e.g. the account was deleted elsewhere) signs itself out on next
+  load instead of leaving the app stuck on a blank screen — see
+  [`auth-context.tsx`](src/contexts/auth-context.tsx).
+- Push notifications, biometric unlock, offline dashboard caching (`expo-sqlite`).
+
 ## Stack
 
 - Expo SDK 57, Expo Router (file-based navigation), TypeScript
@@ -26,14 +79,20 @@ Realtime). Invoice payments are **simulated** — see [Payments](#4-payments--si
 src/
   app/                    Expo Router routes
     (auth)/                 login, signup
-    (freelancer)/            dashboard, clients, invoices, projects, settings
+    (freelancer)/            dashboard, clients (+ new), invoices, projects, settings
+      settings/               index, email-password, privacy-data
     (client)/                home, invoices (+ pay), messages, settings
     enable-biometric.tsx    one-time post-login prompt
+    privacy-policy.tsx      role-agnostic — lives at app root, not inside either role group
+    terms.tsx                (role layouts redirect away from each other, so shared static
+                              content has to sit outside both)
+    upgrade.tsx             simulated Pro subscription flow
     _layout.tsx             providers, biometric lock overlay
-  components/             shared UI (cards, badges, charts, message thread, ...)
+  components/             shared UI — see Components below
   contexts/               auth, app-lock (biometric), notification toast
   hooks/                  use-cached-query (offline-aware fetch), theme
-  lib/                    supabase client, queries, storage, payments, notifications
+  lib/                    supabase client, queries, storage, payments, notifications, account deletion
+  theme/                  theme definitions (Amber Noir / Dark Cool / Light) + provider
   animations/easing.ts    shared easing/duration/spring tokens
   types/database.ts       row types matching db/schema.sql
 db/
@@ -44,7 +103,32 @@ scripts/
 supabase/functions/
   push-notify/             sends push on invoice-paid / new-message (Database Webhooks)
   simulate-payment/        the only place an invoice flips to `paid` (called from the app, no processor)
+  create-client/           creates a real linked client account (admin API — profiles.id FKs to auth.users)
+  delete-account/          deletes the caller's own account + everything it owns (admin API, cascading FKs)
+eas.json                 EAS Build profiles — see Build & distribution below
 ```
+
+## Components
+
+A few worth knowing about, in [`src/components`](src/components):
+
+- **`themed-text.tsx` / `themed-view.tsx`** — every piece of text/background in the app goes through
+  these, reading color/font/size from the active theme rather than hardcoding values.
+- **`theme-picker.tsx`** — the Settings theme switcher; persists the choice to `profiles.theme`.
+- **`animated-counter.tsx`** — counts up to a numeric value on mount/change; used for every dashboard
+  figure. Formats with a pinned `en-US` locale (see [A platform quirk worth
+  knowing](#a-platform-quirk-worth-knowing) below).
+- **`revenue-chart.tsx`** — the dashboard's 6-month trend line, hand-rolled in `react-native-svg`
+  rather than a charting library.
+- **`virtual-card-preview.tsx`** — the simulated card-entry mockup shown on the client payment screen.
+- **`delete-account-section.tsx`** — the reveal → type-DELETE-to-confirm account deletion UI, shared
+  between the freelancer and client Privacy & Data screens.
+- **`progress-ring.tsx` / `status-badge.tsx`** — the circular project-progress indicator and the
+  colored draft/sent/paid/overdue pills.
+- **`icons.tsx`** — the whole icon set is hand-drawn inline SVG (no `@expo/vector-icons` dependency
+  for app chrome), so every icon matches the theme's stroke weight exactly.
+- **`lock-screen.tsx`** — the biometric unlock overlay, rendered above the whole app in the root
+  layout.
 
 ## Setup
 
@@ -140,6 +224,43 @@ Push tokens only register on a physical device (not the simulator/emulator) and 
 [EAS project ID](https://docs.expo.dev/push-notifications/push-notifications-setup/) once you build
 with EAS.
 
+## Build & distribution
+
+The project is linked to EAS (`@brian101/ledger`, `eas.json`'s `extra.eas.projectId` in `app.json`).
+Build profiles, in [`eas.json`](eas.json):
+
+| Profile | Platform | What it produces | Needs Apple signing? |
+|---|---|---|---|
+| `development` | both | dev-client build for local iteration | iOS: yes |
+| `preview` | both | installable internal build (Android: `.apk`) | iOS: yes |
+| `preview-ios-sim` | iOS only | simulator `.app` (as `.tar.gz`) — no device signing at all | No |
+| `production` | both | store-format build, auto-incrementing version | iOS: yes |
+
+```bash
+eas build --platform android --profile preview        # installable .apk, no Apple account needed
+eas build --platform ios --profile preview-ios-sim     # simulator build, no Apple account needed
+eas build --platform ios --profile preview             # real-device build — needs an Apple Developer
+                                                         # Program membership; run this one yourself so
+                                                         # you can complete the Apple sign-in interactively
+```
+
+**Latest builds** (Android APK installs directly on a device; the iOS one is simulator-only — tools
+like [Appetize.io](https://appetize.io) can run it in a browser, but it won't install on a real
+iPhone):
+
+- Android — <https://expo.dev/artifacts/eas/iFtMkpAFm_puTkeLtalCtc_fN6xIr2R-3twfJSXuSGE.apk>
+- iOS Simulator — <https://expo.dev/artifacts/eas/OPWX1jgoX6lfJjHDSrWmrW0bWbI9pe4NcQkhx_CO6Zk.tar.gz>
+
+These links are individual build artifacts and expire (~2 weeks after the build). The durable place to
+find the current ones — or trigger a new build — is the EAS project dashboard:
+<https://expo.dev/accounts/brian101/projects/ledger>.
+
+Uploading the iOS simulator build to Appetize.io specifically needs a `.zip` of the `.app`, not the
+`.tar.gz` EAS produces — and re-zipping it with a Windows tool (`Compress-Archive`, plain zip UIs)
+silently drops the Unix executable bit on the app binary, which Appetize can't read. Convert with
+something that preserves Unix file modes instead (e.g. a Python `tarfile`/`zipfile` script copying
+each entry's mode into `ZipInfo.external_attr`, or any zip step run from an actual Unix environment).
+
 ## Notes on what's stubbed
 
 - **Payments**: simulated end-to-end, deliberately — see [Payments](#4-payments--simulated) above for
@@ -153,3 +274,12 @@ with EAS.
 - **Deliverable attachments**: the upload path (camera/library → Supabase Storage) is shared between
   receipts and deliverables; the project Files tab currently only exposes the receipt-scan flow from
   the freelancer side.
+
+## A platform quirk worth knowing
+
+Every numeric display (`AnimatedCounter`'s default formatter, and the couple of places that call
+`toLocaleString()` directly) pins `'en-US'` explicitly rather than trusting the device's ambient
+locale. Found the hard way: on iOS, an unpinned `.toLocaleString()` follows the device/simulator's
+locale, and on a locale that formats digits outside Latin numerals, Outfit (Latin-only) has no glyph
+for them — it silently renders as a blank box instead of throwing. Android's formatting happened to
+land on plain digits regardless, which is why this only showed up testing on iOS (via Appetize.io).
