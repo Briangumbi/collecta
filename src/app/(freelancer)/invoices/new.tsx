@@ -4,15 +4,16 @@ import { useEffect, useState } from 'react';
 import { Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
 import { ClientPicker } from '@/components/client-picker';
+import { NumberPad } from '@/components/number-pad';
 import { PrimaryButton } from '@/components/primary-button';
-import { TextField } from '@/components/text-field';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { ToggleSwitch } from '@/components/toggle-switch';
 import { useAuth } from '@/contexts/auth-context';
 import { useTheme } from '@/hooks/use-theme';
+import { useThemeTokens } from '@/theme/ThemeProvider';
 import { CURRENCIES } from '@/constants/currencies';
-import { formatDate } from '@/lib/format';
+import { formatDate, getCurrencySymbol } from '@/lib/format';
 import { createInvoice, createInvoiceTemplate, getClientDetail, getClients } from '@/lib/queries';
 import type { Profile, Project, RecurringInterval } from '@/types/database';
 
@@ -26,6 +27,7 @@ const INTERVALS: { value: RecurringInterval; label: string }[] = [
 export default function NewInvoiceScreen() {
   const { profile } = useAuth();
   const theme = useTheme();
+  const { radius } = useThemeTokens();
   const [clients, setClients] = useState<Profile[]>([]);
   const [selectedClientId, setSelectedClientId] = useState<string | null>(null);
   const [projects, setProjects] = useState<Project[]>([]);
@@ -135,8 +137,6 @@ export default function NewInvoiceScreen() {
           </>
         ) : null}
 
-        <TextField label="Amount" value={amount} onChangeText={setAmount} keyboardType="decimal-pad" placeholder="0.00" />
-
         <ThemedText type="small" themeColor="textSecondary" style={styles.label}>
           Currency
         </ThemedText>
@@ -162,6 +162,13 @@ export default function NewInvoiceScreen() {
             );
           })}
         </ScrollView>
+
+        <ThemedText type="small" themeColor="textSecondary" style={styles.label}>
+          Amount
+        </ThemedText>
+        <View style={[styles.numberPadWrap, { backgroundColor: theme.backgroundElement, borderRadius: radius.card }]}>
+          <NumberPad value={amount} onChange={setAmount} currencySymbol={getCurrencySymbol(currency)} />
+        </View>
 
         <View style={styles.recurringRow}>
           <View style={styles.recurringLabelWrap}>
@@ -287,6 +294,10 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     gap: 8,
     marginBottom: 16,
+  },
+  numberPadWrap: {
+    padding: 16,
+    marginBottom: 20,
   },
   recurringRow: {
     flexDirection: 'row',

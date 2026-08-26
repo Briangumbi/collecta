@@ -39,8 +39,10 @@ client**, or ask a freelancer account to add you.
 - **Invoices** — list filterable by draft/sent/paid/overdue, detail view, payment reminders,
   recurring invoices (save a template — weekly/monthly/quarterly/yearly — and it generates a real
   invoice on schedule with no app or server needing to be open; see
-  [Recurring invoices](#6-recurring-invoices) below), and a per-invoice currency (10 common
-  currencies — see [Multi-currency](#7-multi-currency) below).
+  [Recurring invoices](#6-recurring-invoices) below), a per-invoice currency (10 common
+  currencies — see [Multi-currency](#7-multi-currency) below), and a big-digit tap-to-enter keypad
+  for the amount instead of the OS keyboard (see
+  [`components/number-pad.tsx`](src/components/number-pad.tsx)).
 - **Projects** — list with progress rings, milestones, and status (active / on hold / completed).
 - **Messaging** — realtime per-project thread with the client.
 - **Settings** — profile, multi-theme picker (Amber Noir / Dark Cool / Light, each dark+light aware),
@@ -51,6 +53,11 @@ client**, or ask a freelancer account to add you.
 - Scoped read-only view of the projects and invoices a freelancer has shared, realtime messaging, and
   a simulated card-entry payment flow — see [Payments](#4-payments--simulated).
 - Its own Settings: profile, biometric lock, Privacy & Data, account deletion, Legal.
+
+**Both roles**
+- A first-run welcome walkthrough (3 slides, skippable) — a device-local one-time flag, same pattern
+  as the biometric-unlock prompt, so it shows once per device regardless of how old the account is.
+  See [`onboarding.tsx`](src/app/onboarding.tsx) / [`use-onboarding.ts`](src/hooks/use-onboarding.ts).
 
 **Security & privacy**
 - Row Level Security on every table; a `freelancer_clients_insert` / `projects_all_freelancer` /
@@ -321,6 +328,10 @@ each entry's mode into `ZipInfo.external_attr`, or any zip step run from an actu
 - **Deliverable attachments**: the upload path (camera/library → Supabase Storage) is shared between
   receipts and deliverables; the project Files tab currently only exposes the receipt-scan flow from
   the freelancer side.
+- **Not built**: home-screen quick actions (long-press the app icon → "New Invoice") and an alternate
+  app icon picker — both real, native-only features (no web equivalent to verify against in this
+  environment) that also need assets this pass didn't have: quick actions need real deep-link wiring
+  end-to-end on a device, and an icon picker needs actual designed icon variants, not placeholders.
 
 ## A platform quirk worth knowing
 
