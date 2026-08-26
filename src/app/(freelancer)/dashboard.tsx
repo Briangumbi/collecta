@@ -22,7 +22,7 @@ import { useCachedQuery } from '@/hooks/use-cached-query';
 import { useTheme } from '@/hooks/use-theme';
 import { useThemeTokens } from '@/theme/ThemeProvider';
 import type { ShadowPreset } from '@/theme/tokens';
-import { daysUntil, formatCurrency } from '@/lib/format';
+import { daysUntil, formatCurrency, getCurrencySymbol } from '@/lib/format';
 import { getDashboardSummary, getOverdueInvoices, getUpcomingInvoices } from '@/lib/queries';
 import { sendPaymentReminders, summarizeReminderResults } from '@/lib/reminders';
 
@@ -47,9 +47,12 @@ export default function DashboardScreen() {
   const [sendingReminders, setSendingReminders] = useState(false);
   const freelancerId = profile?.id ?? '';
 
+  const currency = profile?.default_currency ?? 'usd';
+  const currencySymbol = getCurrencySymbol(currency);
+
   const { data, isLoading, isOffline, refetch } = useCachedQuery(
-    `dashboard-summary:${freelancerId}`,
-    () => getDashboardSummary(freelancerId)
+    `dashboard-summary:${freelancerId}:${currency}`,
+    () => getDashboardSummary(freelancerId, currency)
   );
   const { data: upcomingInvoices } = useCachedQuery(`upcoming-invoices:${freelancerId}`, () => getUpcomingInvoices(freelancerId, 5));
 
@@ -194,7 +197,7 @@ export default function DashboardScreen() {
                     </ThemedText>
                   ) : (
                     <>
-                      <ThemedText style={{ fontFamily: fonts.display, fontSize: 18, color: '#FFFFFF', marginTop: 10 }}>$</ThemedText>
+                      <ThemedText style={{ fontFamily: fonts.display, fontSize: 18, color: '#FFFFFF', marginTop: 10 }}>{currencySymbol}</ThemedText>
                       <AnimatedCounter
                         value={data?.outstandingTotal ?? 0}
                         formatter={(n) => Math.round(n).toLocaleString('en-US')}
@@ -269,7 +272,7 @@ export default function DashboardScreen() {
               <View style={styles.statValueRow}>
                 <AnimatedCounter
                   value={data?.paidThisMonth ?? 0}
-                  formatter={(n) => formatCurrency(n)}
+                  formatter={(n) => formatCurrency(n, currency)}
                   style={{ fontFamily: fonts.displayHeavy, fontSize: 26, letterSpacing: -0.3, color: theme.success }}
                 />
                 <View style={[styles.statIconWrap, { backgroundColor: theme.successBg, borderRadius: 10 }]}>

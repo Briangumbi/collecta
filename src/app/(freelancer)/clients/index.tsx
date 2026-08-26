@@ -25,10 +25,11 @@ export default function ClientsScreen() {
   const theme = useTheme();
   const { radius, cardShadow } = useThemeTokens();
   const freelancerId = profile?.id ?? '';
+  const currency = profile?.default_currency ?? 'usd';
   const [query, setQuery] = useState('');
   const [filter, setFilter] = useState<Filter>('all');
 
-  const { data, isLoading, isOffline, refetch } = useCachedQuery(`clients:${freelancerId}`, () => getClients(freelancerId));
+  const { data, isLoading, isOffline, refetch } = useCachedQuery(`clients:${freelancerId}:${currency}`, () => getClients(freelancerId, currency));
 
   useFocusEffect(
     useCallback(() => {
@@ -91,7 +92,7 @@ export default function ClientsScreen() {
               Outstanding
             </ThemedText>
             <ThemedText type="title" themeColor="primary" style={styles.summaryValue}>
-              {formatCurrency(totalOutstanding)}
+              {formatCurrency(totalOutstanding, currency)}
             </ThemedText>
             <ThemedText type="small" themeColor="textSecondary" style={styles.summaryFootnote}>
               {owingCount} clients owe
@@ -132,7 +133,7 @@ export default function ClientsScreen() {
 
         <View style={styles.list}>
           {filtered.map((client) => (
-            <ClientCard key={client.id} client={client} />
+            <ClientCard key={client.id} client={client} currency={currency} />
           ))}
           {!isLoading && filtered.length === 0 ? (
             <ThemedText type="small" themeColor="textSecondary" style={styles.empty}>
@@ -145,7 +146,7 @@ export default function ClientsScreen() {
   );
 }
 
-function ClientCard({ client }: { client: ClientSummary }) {
+function ClientCard({ client, currency }: { client: ClientSummary; currency: string }) {
   const theme = useTheme();
   const { radius, cardShadow } = useThemeTokens();
   const hasOutstanding = client.outstandingBalance > 0;
@@ -188,7 +189,7 @@ function ClientCard({ client }: { client: ClientSummary }) {
                 <>
                   <View style={[styles.dot, { backgroundColor: theme.textSecondary }]} />
                   <ThemedText type="code" themeColor="primary">
-                    {formatCurrency(client.outstandingBalance)} due
+                    {formatCurrency(client.outstandingBalance, currency)} due
                   </ThemedText>
                 </>
               ) : null}
@@ -200,7 +201,7 @@ function ClientCard({ client }: { client: ClientSummary }) {
 
           <View style={styles.right}>
             <ThemedText type="smallBold" themeColor={hasOutstanding ? 'primary' : 'textSecondary'}>
-              {hasOutstanding ? formatCurrency(client.outstandingBalance) : formatCurrency(client.totalBilled)}
+              {hasOutstanding ? formatCurrency(client.outstandingBalance, currency) : formatCurrency(client.totalBilled, currency)}
             </ThemedText>
             <ThemedText type="code" themeColor="textSecondary">
               {hasOutstanding ? 'outstanding' : 'total billed'}

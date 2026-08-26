@@ -2,6 +2,12 @@ export function formatCurrency(amount: number, currency = 'usd') {
   return new Intl.NumberFormat('en-US', { style: 'currency', currency: currency.toUpperCase(), maximumFractionDigits: 0 }).format(amount);
 }
 
+/** Just the symbol/prefix (e.g. "$", "€", "TSh") for a currency, for UI that renders the amount separately. */
+export function getCurrencySymbol(currency = 'usd') {
+  const parts = new Intl.NumberFormat('en-US', { style: 'currency', currency: currency.toUpperCase(), currencyDisplay: 'narrowSymbol' }).formatToParts(0);
+  return parts.find((p) => p.type === 'currency')?.value ?? currency.toUpperCase();
+}
+
 export function formatDate(iso: string | null) {
   if (!iso) return '—';
   return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });

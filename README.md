@@ -39,11 +39,12 @@ client**, or ask a freelancer account to add you.
 - **Invoices** — list filterable by draft/sent/paid/overdue, detail view, payment reminders,
   recurring invoices (save a template — weekly/monthly/quarterly/yearly — and it generates a real
   invoice on schedule with no app or server needing to be open; see
-  [Recurring invoices](#6-recurring-invoices) below).
+  [Recurring invoices](#6-recurring-invoices) below), and a per-invoice currency (10 common
+  currencies — see [Multi-currency](#7-multi-currency) below).
 - **Projects** — list with progress rings, milestones, and status (active / on hold / completed).
 - **Messaging** — realtime per-project thread with the client.
 - **Settings** — profile, multi-theme picker (Amber Noir / Dark Cool / Light, each dark+light aware),
-  biometric app-lock, notification preferences, simulated Pro subscription/upgrade, email & password,
+  default currency, biometric app-lock, notification preferences, simulated Pro subscription/upgrade, email & password,
   Privacy & Data (real data counts + account deletion), Legal (Privacy Policy / Terms of Service).
 
 **Client side**
@@ -248,6 +249,27 @@ part of `db/schema.sql` for fresh installs), which:
 Supabase plan including Free, but confirm it under **Database → Extensions** if the schedule doesn't
 seem to be firing. To generate due invoices immediately instead of waiting for the next cron tick
 (e.g. while testing), run `select public.generate_recurring_invoices();` directly in the SQL editor.
+
+### 7. Multi-currency
+
+`invoices.currency` (and `invoice_templates.currency`) already existed for a while before anything
+in the UI actually let a freelancer set it to something other than the `usd` default — added by
+[`db/migrations/009_multi_currency.sql`](db/migrations/009_multi_currency.sql):
+
+- `profiles.default_currency` — set from Settings → Default Currency
+  ([`settings/currency.tsx`](<src/app/(freelancer)/settings/currency.tsx>)), pre-fills the currency
+  picker on new invoices ([`invoices/new.tsx`](<src/app/(freelancer)/invoices/new.tsx>)).
+- The 10 supported currencies live in [`src/constants/currencies.ts`](src/constants/currencies.ts)
+  — add more there if you need one that isn't listed; any valid ISO 4217 code works, since
+  `getCurrencySymbol`/`formatCurrency` (in [`src/lib/format.ts`](src/lib/format.ts)) both derive the
+  symbol/formatting from `Intl.NumberFormat` rather than a hardcoded lookup table.
+
+**The one real limitation**: dashboard/client/invoice-list aggregate totals (Outstanding Balance,
+Paid This Month, the Overdue/Paid stat cards) can't correctly sum amounts across different
+currencies, so they're scoped to the freelancer's `default_currency` — an invoice created in a
+different currency still works completely normally (shows correctly everywhere it's listed
+individually, can still be paid, etc.), it just isn't counted in those specific aggregate figures.
+There's no currency conversion anywhere in the app.
 
 ## Build & distribution
 

@@ -26,6 +26,8 @@ export interface Profile {
   theme: string;
   /** Freelancer-only setting; defaults set in db/schema.sql. */
   notification_prefs: NotificationPrefs;
+  /** Freelancer-only setting — pre-fills new invoices, scopes dashboard aggregate totals. */
+  default_currency: string;
   created_at: string;
 }
 

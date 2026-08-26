@@ -15,6 +15,7 @@ export default function SettingsStackLayout() {
       <Stack.Screen name="index" options={{ headerShown: false }} />
       <Stack.Screen name="email-password" options={{ title: 'Email & Password' }} />
       <Stack.Screen name="privacy-data" options={{ title: 'Privacy & Data' }} />
+      <Stack.Screen name="currency" options={{ title: 'Default Currency' }} />
     </Stack>
   );
 }

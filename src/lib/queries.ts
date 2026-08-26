@@ -26,11 +26,19 @@ export interface DashboardSummary {
   revenueByMonth: { month: string; total: number }[];
 }
 
-export async function getDashboardSummary(freelancerId: string): Promise<DashboardSummary> {
+/**
+ * `currency` scopes every total to that currency, since summing across
+ * different currencies isn't valid — pass the freelancer's default_currency.
+ * Invoices in a different currency simply aren't counted in these totals
+ * (they still show correctly, in their own currency, everywhere they're
+ * listed individually).
+ */
+export async function getDashboardSummary(freelancerId: string, currency: string): Promise<DashboardSummary> {
   const { data: invoices, error: invoicesError } = await supabase
     .from('invoices')
     .select('amount, status, paid_at, client_id')
-    .eq('freelancer_id', freelancerId);
+    .eq('freelancer_id', freelancerId)
+    .eq('currency', currency);
   if (invoicesError) throw invoicesError;
 
   const { count: activeProjectCount, error: projectsError } = await supabase
@@ -107,7 +115,13 @@ export interface ClientSummary extends Profile {
   status: 'active' | 'inactive';
 }
 
-export async function getClients(freelancerId: string): Promise<ClientSummary[]> {
+/**
+ * `currency`, when given, scopes outstandingBalance/totalBilled the same way
+ * as getDashboardSummary (see its comment) — pass it when actually
+ * displaying those totals. Omit it when the caller just needs the client
+ * list itself (a picker, a count) and doesn't render those amounts.
+ */
+export async function getClients(freelancerId: string, currency?: string): Promise<ClientSummary[]> {
   const { data: links, error: linksError } = await supabase
     .from('freelancer_clients')
     .select('client_id')
@@ -117,11 +131,14 @@ export async function getClients(freelancerId: string): Promise<ClientSummary[]>
   const clientIds = (links ?? []).map((l) => l.client_id);
   if (clientIds.length === 0) return [];
 
+  let invoicesQuery = supabase.from('invoices').select('client_id, amount, status, created_at').eq('freelancer_id', freelancerId);
+  if (currency) invoicesQuery = invoicesQuery.eq('currency', currency);
+
   const [{ data: profiles, error: profilesError }, { data: projects, error: projectsError }, { data: invoices, error: invoicesError }] =
     await Promise.all([
       supabase.from('profiles').select('*').in('id', clientIds),
       supabase.from('projects').select('client_id, status, created_at').eq('freelancer_id', freelancerId),
-      supabase.from('invoices').select('client_id, amount, status, created_at').eq('freelancer_id', freelancerId),
+      invoicesQuery,
     ]);
   if (profilesError) throw profilesError;
   if (projectsError) throw projectsError;
@@ -277,6 +294,7 @@ export async function createInvoice(input: {
   clientId: string;
   projectId: string | null;
   amount: number;
+  currency: string;
   dueDate: string | null;
   status: 'draft' | 'sent';
 }) {
@@ -285,6 +303,7 @@ export async function createInvoice(input: {
     client_id: input.clientId,
     project_id: input.projectId,
     amount: input.amount,
+    currency: input.currency,
     due_date: input.dueDate,
     status: input.status,
   });
@@ -342,6 +361,7 @@ export async function createInvoiceTemplate(input: {
   clientId: string;
   projectId: string | null;
   amount: number;
+  currency: string;
   interval: RecurringInterval;
   /** First date the recurring invoice should be generated on. */
   startDate: string;
@@ -352,6 +372,7 @@ export async function createInvoiceTemplate(input: {
     client_id: input.clientId,
     project_id: input.projectId,
     amount: input.amount,
+    currency: input.currency,
     interval: input.interval,
     next_run_date: input.startDate,
     due_in_days: input.dueInDays ?? 14,

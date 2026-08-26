@@ -263,6 +263,13 @@ export default function FreelancerSettingsScreen() {
               divider
             />
             <AccountRow
+              label="Default Currency"
+              value={profile.default_currency.toUpperCase()}
+              icon={<IcoCreditCard color={theme.textSecondary} size={16} />}
+              onPress={() => router.push('/(freelancer)/settings/currency')}
+              divider
+            />
+            <AccountRow
               label="Privacy & Data"
               icon={<IcoUser color={theme.textSecondary} size={16} />}
               onPress={() => router.push('/(freelancer)/settings/privacy-data')}
@@ -328,7 +335,19 @@ function NotificationRow({
   );
 }
 
-function AccountRow({ label, icon, onPress, divider }: { label: string; icon: React.ReactNode; onPress: () => void; divider?: boolean }) {
+function AccountRow({
+  label,
+  value,
+  icon,
+  onPress,
+  divider,
+}: {
+  label: string;
+  value?: string;
+  icon: React.ReactNode;
+  onPress: () => void;
+  divider?: boolean;
+}) {
   const theme = useTheme();
   return (
     <Pressable
@@ -339,6 +358,11 @@ function AccountRow({ label, icon, onPress, divider }: { label: string; icon: Re
       <ThemedText type="default" style={styles.accountLabel}>
         {label}
       </ThemedText>
+      {value ? (
+        <ThemedText type="small" themeColor="textSecondary" style={styles.accountValue}>
+          {value}
+        </ThemedText>
+      ) : null}
       <IcoChevronRight color={theme.border} size={14} />
     </Pressable>
   );
@@ -509,6 +533,9 @@ const styles = StyleSheet.create({
   },
   accountLabel: {
     flex: 1,
+  },
+  accountValue: {
+    marginRight: 4,
   },
   version: {
     textAlign: 'center',

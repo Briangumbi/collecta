@@ -17,6 +17,9 @@ create table public.profiles (
   push_token text,
   theme text not null default 'amber-noir',
   notification_prefs jsonb not null default '{"invoicePaid":true,"paymentReminders":true,"weeklyReport":false,"projectUpdates":true,"marketing":false}'::jsonb,
+  -- Freelancer-only setting — pre-fills new invoices and scopes the dashboard
+  -- aggregate totals, which can't correctly sum across different currencies.
+  default_currency text not null default 'usd',
   created_at timestamptz not null default now()
 );
 
@@ -251,7 +254,7 @@ create policy "profiles_update_self" on public.profiles
 -- are deliberately excluded — email changes go through
 -- supabase.auth.updateUser() instead, and role is fixed at signup.
 revoke update on public.profiles from authenticated;
-grant update (name, avatar_url, push_token, theme, notification_prefs) on public.profiles to authenticated;
+grant update (name, avatar_url, push_token, theme, notification_prefs, default_currency) on public.profiles to authenticated;
 
 -- Freelancer-owned tables below check "is_freelancer()" in addition to row
 -- ownership, since ownership alone (freelancer_id = auth.uid()) is satisfied

@@ -26,6 +26,7 @@ export default function InvoicesScreen() {
   const theme = useTheme();
   const { radius, cardShadow } = useThemeTokens();
   const freelancerId = profile?.id ?? '';
+  const currency = profile?.default_currency ?? 'usd';
   const { status: initialStatus } = useLocalSearchParams<{ status?: InvoiceStatus }>();
   const [filter, setFilter] = useState<InvoiceStatus | 'all'>(initialStatus ?? 'all');
 
@@ -36,13 +37,16 @@ export default function InvoicesScreen() {
     return filter === 'all' ? invoices : invoices.filter((i) => i.status === filter);
   }, [data, filter]);
 
+  // Totals are scoped to the freelancer's default currency — summing across
+  // different currencies wouldn't be valid. Individual rows below still show
+  // each invoice's own currency correctly.
   const totals = useMemo(() => {
-    const invoices = data ?? [];
+    const invoices = (data ?? []).filter((i) => i.currency === currency);
     return {
       overdue: invoices.filter((i) => i.status === 'overdue').reduce((s, i) => s + Number(i.amount), 0),
       paid: invoices.filter((i) => i.status === 'paid').reduce((s, i) => s + Number(i.amount), 0),
     };
-  }, [data]);
+  }, [data, currency]);
 
   return (
     <ThemedView style={styles.flex}>
@@ -74,7 +78,7 @@ export default function InvoicesScreen() {
               Overdue
             </ThemedText>
             <ThemedText type="title" themeColor="danger" style={styles.statValue}>
-              {formatCurrency(totals.overdue)}
+              {formatCurrency(totals.overdue, currency)}
             </ThemedText>
           </View>
           <View style={[styles.statCard, { backgroundColor: theme.backgroundElement, borderRadius: radius.card - 4 }, cardShadowStyle(cardShadow.color, cardShadow.opacity)]}>
@@ -82,7 +86,7 @@ export default function InvoicesScreen() {
               Paid
             </ThemedText>
             <ThemedText type="title" themeColor="success" style={styles.statValue}>
-              {formatCurrency(totals.paid)}
+              {formatCurrency(totals.paid, currency)}
             </ThemedText>
           </View>
         </View>

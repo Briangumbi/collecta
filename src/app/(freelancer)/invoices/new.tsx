@@ -11,6 +11,7 @@ import { ThemedView } from '@/components/themed-view';
 import { ToggleSwitch } from '@/components/toggle-switch';
 import { useAuth } from '@/contexts/auth-context';
 import { useTheme } from '@/hooks/use-theme';
+import { CURRENCIES } from '@/constants/currencies';
 import { formatDate } from '@/lib/format';
 import { createInvoice, createInvoiceTemplate, getClientDetail, getClients } from '@/lib/queries';
 import type { Profile, Project, RecurringInterval } from '@/types/database';
@@ -30,6 +31,7 @@ export default function NewInvoiceScreen() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
   const [amount, setAmount] = useState('');
+  const [currency, setCurrency] = useState(() => profile?.default_currency ?? 'usd');
   const [dueDate, setDueDate] = useState(() => new Date(Date.now() + 14 * 24 * 60 * 60 * 1000));
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [recurring, setRecurring] = useState(false);
@@ -72,6 +74,7 @@ export default function NewInvoiceScreen() {
           clientId: selectedClientId,
           projectId: selectedProjectId,
           amount: numericAmount,
+          currency,
           interval,
           startDate: startDate.toISOString().slice(0, 10),
         });
@@ -81,6 +84,7 @@ export default function NewInvoiceScreen() {
           clientId: selectedClientId,
           projectId: selectedProjectId,
           amount: numericAmount,
+          currency,
           dueDate: dueDate.toISOString().slice(0, 10),
           status,
         });
@@ -131,7 +135,33 @@ export default function NewInvoiceScreen() {
           </>
         ) : null}
 
-        <TextField label="Amount (USD)" value={amount} onChangeText={setAmount} keyboardType="decimal-pad" placeholder="0.00" />
+        <TextField label="Amount" value={amount} onChangeText={setAmount} keyboardType="decimal-pad" placeholder="0.00" />
+
+        <ThemedText type="small" themeColor="textSecondary" style={styles.label}>
+          Currency
+        </ThemedText>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.projectRow}>
+          {CURRENCIES.map(({ code, label }) => {
+            const selected = code === currency;
+            return (
+              <Pressable
+                key={code}
+                onPress={() => setCurrency(code)}
+                style={[
+                  styles.chip,
+                  {
+                    borderColor: selected ? theme.primary : theme.border,
+                    backgroundColor: selected ? theme.backgroundSelected : theme.backgroundElement,
+                  },
+                ]}
+              >
+                <ThemedText type="small" themeColor={selected ? 'primary' : 'text'}>
+                  {code.toUpperCase()} · {label}
+                </ThemedText>
+              </Pressable>
+            );
+          })}
+        </ScrollView>
 
         <View style={styles.recurringRow}>
           <View style={styles.recurringLabelWrap}>

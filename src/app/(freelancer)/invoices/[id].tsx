@@ -11,7 +11,7 @@ import { ThemedView } from '@/components/themed-view';
 import { useTheme } from '@/hooks/use-theme';
 import { useThemeTokens } from '@/theme/ThemeProvider';
 import { avatarColorFor } from '@/lib/avatar-colors';
-import { formatDate, formatInvoiceRef } from '@/lib/format';
+import { formatDate, formatInvoiceRef, getCurrencySymbol } from '@/lib/format';
 import { getInvoiceDetail, markInvoicePaidManually, markInvoiceSent } from '@/lib/queries';
 import { sendPaymentReminder } from '@/lib/reminders';
 import type { Invoice, Profile, Project } from '@/types/database';
@@ -123,7 +123,9 @@ export default function InvoiceDetailScreen() {
             Invoice Amount
           </ThemedText>
           <View style={styles.heroAmountRow}>
-            <ThemedText style={{ fontFamily: fonts.display, fontSize: 18, color: isPaid ? theme.success : theme.primary, marginTop: 8 }}>$</ThemedText>
+            <ThemedText style={{ fontFamily: fonts.display, fontSize: 18, color: isPaid ? theme.success : theme.primary, marginTop: 8 }}>
+              {getCurrencySymbol(invoice.currency)}
+            </ThemedText>
             <ThemedText style={{ fontFamily: fonts.displayHeavy, fontSize: 56, letterSpacing: -1.5, color: isPaid ? theme.success : theme.primary }}>
               {Math.round(Number(invoice.amount)).toLocaleString('en-US')}
             </ThemedText>
