@@ -1,5 +1,7 @@
 # Ledger
 
+![Ledger — Build for freelancers. Premium billing, build for trust.](docs/images/promo.png)
+
 A mobile client-portal app for freelancers and small agencies — manage clients, projects, invoices,
 and get paid, from one app. Two roles share the same codebase: **Freelancer** (full management view)
 and **Client** (scoped read-only + payment view).
