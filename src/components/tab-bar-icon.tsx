@@ -6,9 +6,11 @@ import { useTheme } from '@/hooks/use-theme';
 type IconName = keyof typeof Ionicons.glyphMap;
 
 /**
- * Active tab reads as lit up — a solid lime circle with a dark icon, not a
- * recolored icon on a translucent background. Ignores the tint color the
- * navigator would otherwise pass in, since both states need a fixed,
+ * Active tab reads as lit up — a solid near-white circle with a dark icon,
+ * not a recolored icon on a translucent background. Deliberately neutral
+ * rather than accent-colored: the accent is reserved for a handful of hero
+ * moments, not chrome that's on screen at all times. Ignores the tint color
+ * the navigator would otherwise pass in, since both states need a fixed,
  * theme-driven color regardless of that.
  */
 export function TabBarIcon({ name, focused, size }: { name: IconName; focused: boolean; size: number }) {
@@ -18,15 +20,15 @@ export function TabBarIcon({ name, focused, size }: { name: IconName; focused: b
       style={[
         styles.wrap,
         focused && {
-          backgroundColor: theme.primary,
-          shadowColor: theme.primary,
+          backgroundColor: theme.text,
+          shadowColor: theme.text,
           shadowOffset: { width: 0, height: 0 },
-          shadowOpacity: 0.6,
+          shadowOpacity: 0.3,
           shadowRadius: 10,
         },
       ]}
     >
-      <Ionicons name={name} size={size} color={focused ? theme.primaryText : theme.textSecondary} />
+      <Ionicons name={name} size={size} color={focused ? theme.background : theme.textSecondary} />
     </View>
   );
 }

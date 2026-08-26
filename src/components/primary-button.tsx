@@ -23,7 +23,11 @@ export function PrimaryButton({ label, loading, variant = 'primary', disabled, .
         styles.button,
         {
           borderRadius: radius.pill,
-          backgroundColor: isPrimary ? theme.primary : theme.backgroundSelected,
+          // Primary reads as a neutral, near-white "elevated chip" rather than
+          // a solid wash of the accent color — the accent is reserved for a
+          // handful of hero moments (the balance card, the chart line), not
+          // every button on screen.
+          backgroundColor: isPrimary ? theme.text : theme.backgroundSelected,
           borderWidth: isPrimary ? 0 : StyleSheet.hairlineWidth,
           borderColor: theme.border,
           opacity: disabled ? 0.5 : pressed ? 0.85 : 1,
@@ -34,9 +38,9 @@ export function PrimaryButton({ label, loading, variant = 'primary', disabled, .
       {/* Subtle top-edge highlight for a glassy, tactile quality — primary only. */}
       {isPrimary ? <LinearGradient colors={buttonHighlight} style={styles.highlight} pointerEvents="none" /> : null}
       {loading ? (
-        <ActivityIndicator color={isPrimary ? theme.primaryText : theme.text} />
+        <ActivityIndicator color={isPrimary ? theme.background : theme.text} />
       ) : (
-        <ThemedText type="smallBold" themeColor={isPrimary ? 'primaryText' : 'text'}>
+        <ThemedText type="smallBold" themeColor={isPrimary ? 'background' : 'text'}>
           {label}
         </ThemedText>
       )}

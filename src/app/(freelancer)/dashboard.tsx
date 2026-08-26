@@ -11,7 +11,7 @@ import { ClientBalanceCarousel } from '@/components/dashboard/client-balance-car
 import { DashboardInvoiceRow } from '@/components/dashboard/dashboard-invoice-row';
 import { WeekDayStrip } from '@/components/dashboard/week-day-strip';
 import { GlowBackground } from '@/components/glow-background';
-import { IcoBell, IcoCheck, IcoFilter, IcoSearch } from '@/components/icons';
+import { IcoBell, IcoCheck, IcoEye, IcoEyeOff, IcoFilter, IcoSearch } from '@/components/icons';
 import { OfflineBanner } from '@/components/offline-banner';
 import { PrimaryButton } from '@/components/primary-button';
 import { RevenueChart } from '@/components/revenue-chart';
@@ -31,11 +31,17 @@ import { sendPaymentReminders, summarizeReminderResults } from '@/lib/reminders'
 // the virtual card mockup) for a one-off decorative element.
 const AVATAR_GRADIENT_DIM = '#92610a';
 
+// Deep ember stop for the balance card's gradient — paired with theme.primary
+// so the card is the one place the accent gets to be this vivid, everywhere
+// else (buttons, tab bar) stays neutral by design.
+const BALANCE_CARD_GRADIENT_DEEP = '#4a1c0f';
+
 export default function DashboardScreen() {
   const { profile } = useAuth();
   const theme = useTheme();
-  const { radius, fonts, fontSize, cardShadow } = useThemeTokens();
+  const { radius, fonts, fontSize, cardShadow, shadows } = useThemeTokens();
   const [showSearch, setShowSearch] = useState(false);
+  const [balanceHidden, setBalanceHidden] = useState(false);
   const [query, setQuery] = useState('');
   const [overdueOnly, setOverdueOnly] = useState(false);
   const [sendingReminders, setSendingReminders] = useState(false);
@@ -166,27 +172,49 @@ export default function DashboardScreen() {
           <OfflineBanner visible={isOffline} />
 
           <View style={styles.heroWrap}>
-            <ThemedText type="label" themeColor="textSecondary" style={styles.heroLabel}>
-              Outstanding Balance
-            </ThemedText>
-            <View style={styles.heroAmountRow}>
-              <ThemedText style={{ fontFamily: fonts.display, fontSize: 18, color: theme.primary, marginTop: 10 }}>$</ThemedText>
-              <AnimatedCounter
-                value={data?.outstandingTotal ?? 0}
-                formatter={(n) => Math.round(n).toLocaleString()}
-                type="hero"
-                themeColor="primary"
-              />
-            </View>
-            <View style={styles.heroMetaRow}>
-              <View style={[styles.invoiceCountPill, { backgroundColor: theme.warningBg, borderRadius: radius.pill }]}>
-                <ThemedText type="code" themeColor="primary">
-                  {data?.outstandingInvoiceCount ?? 0} invoices
-                </ThemedText>
-              </View>
-              <ThemedText type="small" themeColor="textSecondary">
-                across {data?.outstandingClientCount ?? 0} clients
-              </ThemedText>
+            <View style={[styles.heroCard, { borderRadius: radius.card }, cardShadowStyle(shadows.virtualCard)]}>
+              <LinearGradient
+                colors={[theme.primary, BALANCE_CARD_GRADIENT_DEEP]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={[styles.heroCardGradient, { borderRadius: radius.card }]}
+              >
+                <View style={styles.heroHeaderRow}>
+                  <ThemedText type="label" style={styles.heroLabel}>
+                    Outstanding Balance
+                  </ThemedText>
+                  <Pressable onPress={() => setBalanceHidden((v) => !v)} hitSlop={10}>
+                    {balanceHidden ? <IcoEyeOff color="#FFFFFFB3" size={16} /> : <IcoEye color="#FFFFFFB3" size={16} />}
+                  </Pressable>
+                </View>
+                <View style={styles.heroAmountRow}>
+                  {balanceHidden ? (
+                    <ThemedText type="hero" style={styles.heroAmount}>
+                      ••••••
+                    </ThemedText>
+                  ) : (
+                    <>
+                      <ThemedText style={{ fontFamily: fonts.display, fontSize: 18, color: '#FFFFFF', marginTop: 10 }}>$</ThemedText>
+                      <AnimatedCounter
+                        value={data?.outstandingTotal ?? 0}
+                        formatter={(n) => Math.round(n).toLocaleString()}
+                        type="hero"
+                        style={styles.heroAmount}
+                      />
+                    </>
+                  )}
+                </View>
+                <View style={styles.heroMetaRow}>
+                  <View style={[styles.invoiceCountPill, { backgroundColor: '#FFFFFF26', borderRadius: radius.pill }]}>
+                    <ThemedText type="code" style={styles.heroMetaText}>
+                      {data?.outstandingInvoiceCount ?? 0} invoices
+                    </ThemedText>
+                  </View>
+                  <ThemedText type="small" style={styles.heroMetaSubtext}>
+                    across {data?.outstandingClientCount ?? 0} clients
+                  </ThemedText>
+                </View>
+              </LinearGradient>
             </View>
           </View>
 
@@ -393,21 +421,44 @@ const styles = StyleSheet.create({
   },
   heroWrap: {
     paddingHorizontal: 20,
+  },
+  heroCard: {
+    overflow: 'hidden',
+  },
+  heroCardGradient: {
+    paddingVertical: 28,
+    paddingHorizontal: 20,
     alignItems: 'center',
   },
-  heroLabel: {
+  heroHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    width: '100%',
     marginBottom: 6,
+  },
+  heroLabel: {
+    color: '#FFFFFFB3',
   },
   heroAmountRow: {
     flexDirection: 'row',
     alignItems: 'flex-start',
     gap: 2,
   },
+  heroAmount: {
+    color: '#FFFFFF',
+  },
   heroMetaRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
     marginTop: 8,
+  },
+  heroMetaText: {
+    color: '#FFFFFF',
+  },
+  heroMetaSubtext: {
+    color: '#FFFFFFB3',
   },
   invoiceCountPill: {
     paddingHorizontal: 12,
