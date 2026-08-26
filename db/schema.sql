@@ -221,16 +221,40 @@ create policy "profiles_select_counterparty" on public.profiles
 create policy "profiles_update_self" on public.profiles
   for update using (id = auth.uid());
 
+-- RLS's WITH CHECK can only see the proposed new row, not compare it against
+-- the old one — so it can't stop a client-role account writing role =
+-- 'freelancer' to their own row via profiles_update_self above. Restrict at
+-- the privilege layer instead: `authenticated` may only ever touch the
+-- columns the app actually lets a user self-edit. `id`, `role`, and `email`
+-- are deliberately excluded — email changes go through
+-- supabase.auth.updateUser() instead, and role is fixed at signup.
+revoke update on public.profiles from authenticated;
+grant update (name, avatar_url, push_token, theme, notification_prefs) on public.profiles to authenticated;
+
+-- Freelancer-owned tables below check "is_freelancer()" in addition to row
+-- ownership, since ownership alone (freelancer_id = auth.uid()) is satisfied
+-- by any authenticated user naming themselves as the freelancer — role
+-- notwithstanding.
+create or replace function public.is_freelancer()
+returns boolean
+language sql
+stable
+security definer set search_path = public
+as $$
+  select exists (select 1 from public.profiles where id = auth.uid() and role = 'freelancer');
+$$;
+
 -- freelancer_clients
 create policy "freelancer_clients_select" on public.freelancer_clients
   for select using (freelancer_id = auth.uid() or client_id = auth.uid());
 
 create policy "freelancer_clients_insert" on public.freelancer_clients
-  for insert with check (freelancer_id = auth.uid());
+  for insert with check (freelancer_id = auth.uid() and public.is_freelancer());
 
 -- projects
 create policy "projects_all_freelancer" on public.projects
-  for all using (freelancer_id = auth.uid()) with check (freelancer_id = auth.uid());
+  for all using (freelancer_id = auth.uid() and public.is_freelancer())
+  with check (freelancer_id = auth.uid() and public.is_freelancer());
 
 create policy "projects_select_client" on public.projects
   for select using (client_id = auth.uid());
@@ -250,7 +274,8 @@ create policy "milestones_select_client" on public.milestones
 
 -- invoices
 create policy "invoices_all_freelancer" on public.invoices
-  for all using (freelancer_id = auth.uid()) with check (freelancer_id = auth.uid());
+  for all using (freelancer_id = auth.uid() and public.is_freelancer())
+  with check (freelancer_id = auth.uid() and public.is_freelancer());
 
 create policy "invoices_select_client" on public.invoices
   for select using (client_id = auth.uid());
@@ -290,7 +315,8 @@ create policy "attachments_select_client" on public.attachments
 
 -- subscriptions: freelancer only, own row
 create policy "subscriptions_all_freelancer" on public.subscriptions
-  for all using (freelancer_id = auth.uid()) with check (freelancer_id = auth.uid());
+  for all using (freelancer_id = auth.uid() and public.is_freelancer())
+  with check (freelancer_id = auth.uid() and public.is_freelancer());
 
 -- activity_events: freelancer only, own feed, read-only from the client app
 -- (rows are written by the SECURITY DEFINER trigger functions above)

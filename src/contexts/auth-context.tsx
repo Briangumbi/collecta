@@ -25,26 +25,45 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const fetchProfile = async (userId: string) => {
     const { data, error } = await supabase.from('profiles').select('*').eq('id', userId).single();
-    if (!error && data) setProfile(data as Profile);
+    if (!error && data) {
+      setProfile(data as Profile);
+      return true;
+    }
+    setProfile(null);
+    return false;
   };
 
   useEffect(() => {
     let mounted = true;
 
-    supabase.auth.getSession().then(async ({ data }) => {
-      if (!mounted) return;
-      setSession(data.session);
-      if (data.session) await fetchProfile(data.session.user.id);
-      setIsLoading(false);
-    });
-
-    const { data: listener } = supabase.auth.onAuthStateChange(async (_event, nextSession) => {
-      setSession(nextSession);
+    // A stored session can outlive the account it points to (e.g. deleted from
+    // another device, or a revoked/expired token) — the JWT still looks valid
+    // locally, but there's no profile row to route on. Sign out rather than
+    // getting stuck with a session and no profile, which would otherwise leave
+    // index.tsx waiting forever and render a blank screen.
+    const applySession = async (nextSession: Session | null) => {
       if (nextSession) {
-        await fetchProfile(nextSession.user.id);
+        const ok = await fetchProfile(nextSession.user.id);
+        if (!mounted) return;
+        if (!ok) {
+          await supabase.auth.signOut();
+          return;
+        }
       } else {
         setProfile(null);
       }
+      setSession(nextSession);
+    };
+
+    supabase.auth.getSession().then(async ({ data }) => {
+      if (!mounted) return;
+      await applySession(data.session);
+      if (mounted) setIsLoading(false);
+    });
+
+    const { data: listener } = supabase.auth.onAuthStateChange(async (_event, nextSession) => {
+      if (!mounted) return;
+      await applySession(nextSession);
     });
 
     return () => {

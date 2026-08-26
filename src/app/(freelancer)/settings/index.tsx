@@ -4,7 +4,7 @@ import { useCallback, useState } from 'react';
 import { Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
 import { GlowBackground } from '@/components/glow-background';
-import { IcoChevronRight, IcoCreditCard, IcoMail, IcoUser } from '@/components/icons';
+import { IcoChevronRight, IcoCreditCard, IcoInvoices, IcoMail, IcoUser } from '@/components/icons';
 import { PrimaryButton } from '@/components/primary-button';
 import { ScreenHeader } from '@/components/screen-header';
 import { SettingsToggleRow } from '@/components/settings-row';
@@ -266,6 +266,25 @@ export default function FreelancerSettingsScreen() {
               label="Privacy & Data"
               icon={<IcoUser color={theme.textSecondary} size={16} />}
               onPress={() => router.push('/(freelancer)/settings/privacy-data')}
+            />
+          </View>
+        </View>
+
+        <View style={styles.section}>
+          <ThemedText type="label" themeColor="textSecondary" style={styles.sectionEyebrow}>
+            Legal
+          </ThemedText>
+          <View style={[styles.listCard, { backgroundColor: theme.backgroundElement, borderRadius: radius.card }]}>
+            <AccountRow
+              label="Privacy Policy"
+              icon={<IcoInvoices color={theme.textSecondary} size={16} />}
+              onPress={() => router.push('/privacy-policy')}
+              divider
+            />
+            <AccountRow
+              label="Terms of Service"
+              icon={<IcoInvoices color={theme.textSecondary} size={16} />}
+              onPress={() => router.push('/terms')}
             />
           </View>
         </View>

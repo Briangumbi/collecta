@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, Alert, ScrollView, StyleSheet, View } from 'react-native';
 
+import { DeleteAccountSection } from '@/components/delete-account-section';
 import { PrimaryButton } from '@/components/primary-button';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
@@ -70,6 +71,10 @@ export default function PrivacyDataScreen() {
           onPress={handleSignOutAll}
           loading={signingOutAll}
         />
+
+        <View style={styles.divider} />
+
+        <DeleteAccountSection warning="This removes your profile, clients, projects, invoices, and messages permanently — your clients keep their own accounts, but you’ll lose your business records." />
       </ScrollView>
     </ThemedView>
   );

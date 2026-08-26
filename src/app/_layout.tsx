@@ -111,6 +111,26 @@ function RootNavigator() {
                   headerShadowVisible: false,
                 }}
               />
+              <Stack.Screen
+                name="privacy-policy"
+                options={{
+                  headerShown: true,
+                  title: 'Privacy Policy',
+                  headerStyle: { backgroundColor: theme.background },
+                  headerTintColor: theme.text,
+                  headerShadowVisible: false,
+                }}
+              />
+              <Stack.Screen
+                name="terms"
+                options={{
+                  headerShown: true,
+                  title: 'Terms of Service',
+                  headerStyle: { backgroundColor: theme.background },
+                  headerTintColor: theme.text,
+                  headerShadowVisible: false,
+                }}
+              />
             </Stack>
             <LockScreen />
           </View>
