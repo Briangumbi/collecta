@@ -1,8 +1,7 @@
 import '@/global.css';
 
 import { DMMono_500Medium } from '@expo-google-fonts/dm-mono';
-import { Fraunces_700Bold, Fraunces_900Black } from '@expo-google-fonts/fraunces';
-import { Outfit_400Regular, Outfit_600SemiBold, useFonts } from '@expo-google-fonts/outfit';
+import { Outfit_400Regular, Outfit_600SemiBold, Outfit_700Bold, Outfit_900Black, useFonts } from '@expo-google-fonts/outfit';
 import { Stack, ThemeProvider as NavigationThemeProvider, type Theme } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect, useMemo } from 'react';
@@ -29,8 +28,8 @@ export default function RootLayout() {
   const [fontsLoaded] = useFonts({
     Outfit_400Regular,
     Outfit_600SemiBold,
-    Fraunces_700Bold,
-    Fraunces_900Black,
+    Outfit_700Bold,
+    Outfit_900Black,
     DMMono_500Medium,
   });
 
@@ -70,8 +69,8 @@ function NavThemeBridge({ children }: { children: React.ReactNode }) {
       fonts: {
         regular: { fontFamily: 'Outfit_400Regular', fontWeight: '400' },
         medium: { fontFamily: 'Outfit_600SemiBold', fontWeight: '600' },
-        bold: { fontFamily: 'Fraunces_700Bold', fontWeight: '700' },
-        heavy: { fontFamily: 'Fraunces_900Black', fontWeight: '900' },
+        bold: { fontFamily: 'Outfit_700Bold', fontWeight: '700' },
+        heavy: { fontFamily: 'Outfit_900Black', fontWeight: '900' },
       },
     }),
     [theme, scheme]

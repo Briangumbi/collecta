@@ -1,11 +1,9 @@
 import type { ThemeDefinition } from '@/theme/tokens';
 
 /**
- * Style 1 — warm premium editorial aesthetic: near-black warm background,
- * amber accent, cream serif display numbers, DM Mono for small eyebrow
- * labels/refs. Ported pixel-for-pixel from the Figma-generated web
- * reference (Design Ledger app dashboard/src/tokens.ts) rather than
- * approximated.
+ * Style 1 — warm fintech aesthetic: near-black background, a vivid
+ * orange-red accent (the "ember" gradient card look), bold geometric sans
+ * numbers, DM Mono for small eyebrow labels/refs.
  *
  * Dark-only by design — the source has no light variant, so both modes
  * resolve to the same warm-dark palette rather than inventing one.
@@ -14,15 +12,15 @@ export const amberNoir: ThemeDefinition = {
   id: 'amber-noir',
   name: 'Amber Noir',
   swatch: {
-    background: '#13100c',
-    surface: '#1c1710',
-    accent: '#f59e0b',
+    background: '#120e09',
+    surface: '#1f1811',
+    accent: '#ff7a29',
   },
   fonts: {
     sans: 'Outfit_400Regular',
     semibold: 'Outfit_600SemiBold',
-    display: 'Fraunces_700Bold',
-    displayHeavy: 'Fraunces_900Black',
+    display: 'Outfit_700Bold',
+    displayHeavy: 'Outfit_900Black',
     mono: 'DMMono_500Medium',
   },
   fontSize: {
@@ -71,23 +69,23 @@ export const amberNoir: ThemeDefinition = {
   modes: {
     dark: {
       colors: {
-        text: '#f5e6cb',
-        background: '#13100c',
-        backgroundElement: '#1c1710',
-        backgroundSelected: '#231d14',
-        textSecondary: '#6b5a42',
-        border: 'rgba(245,158,11,0.12)',
-        primary: '#f59e0b',
-        primaryText: '#13100c',
+        text: '#f7f0e4',
+        background: '#120e09',
+        backgroundElement: '#1f1811',
+        backgroundSelected: '#282016',
+        textSecondary: '#8a7d6c',
+        border: 'rgba(255,122,41,0.14)',
+        primary: '#ff7a29',
+        primaryText: '#120e09',
         success: '#5cb88a',
         successBg: 'rgba(92,184,138,0.1)',
-        warning: '#f59e0b',
-        warningBg: 'rgba(245,158,11,0.1)',
+        warning: '#ff7a29',
+        warningBg: 'rgba(255,122,41,0.1)',
         danger: '#ef4444',
         dangerBg: 'rgba(239,68,68,0.12)',
-        neutralBg: 'rgba(107,90,66,0.15)',
+        neutralBg: 'rgba(138,125,108,0.15)',
       },
-      glow: { color: '#f59e0b', opacity: 0.22 },
+      glow: { color: '#ff7a29', opacity: 0.24 },
       cardShadow: {
         color: '#000000',
         offset: { width: 0, height: 4 },
@@ -100,23 +98,23 @@ export const amberNoir: ThemeDefinition = {
     // Same as dark — see file comment.
     light: {
       colors: {
-        text: '#f5e6cb',
-        background: '#13100c',
-        backgroundElement: '#1c1710',
-        backgroundSelected: '#231d14',
-        textSecondary: '#6b5a42',
-        border: 'rgba(245,158,11,0.12)',
-        primary: '#f59e0b',
-        primaryText: '#13100c',
+        text: '#f7f0e4',
+        background: '#120e09',
+        backgroundElement: '#1f1811',
+        backgroundSelected: '#282016',
+        textSecondary: '#8a7d6c',
+        border: 'rgba(255,122,41,0.14)',
+        primary: '#ff7a29',
+        primaryText: '#120e09',
         success: '#5cb88a',
         successBg: 'rgba(92,184,138,0.1)',
-        warning: '#f59e0b',
-        warningBg: 'rgba(245,158,11,0.1)',
+        warning: '#ff7a29',
+        warningBg: 'rgba(255,122,41,0.1)',
         danger: '#ef4444',
         dangerBg: 'rgba(239,68,68,0.12)',
-        neutralBg: 'rgba(107,90,66,0.15)',
+        neutralBg: 'rgba(138,125,108,0.15)',
       },
-      glow: { color: '#f59e0b', opacity: 0.22 },
+      glow: { color: '#ff7a29', opacity: 0.24 },
       cardShadow: {
         color: '#000000',
         offset: { width: 0, height: 4 },

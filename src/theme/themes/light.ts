@@ -18,8 +18,8 @@ export const light: ThemeDefinition = {
   fonts: {
     sans: 'Outfit_400Regular',
     semibold: 'Outfit_600SemiBold',
-    display: 'Fraunces_700Bold',
-    displayHeavy: 'Fraunces_900Black',
+    display: 'Outfit_700Bold',
+    displayHeavy: 'Outfit_900Black',
     mono: 'DMMono_500Medium',
   },
   fontSize: {
