@@ -14,6 +14,7 @@ export default function ClientsStackLayout() {
     >
       <Stack.Screen name="index" options={{ headerShown: false }} />
       <Stack.Screen name="new" options={{ title: 'Add Client', presentation: 'modal' }} />
+      <Stack.Screen name="import" options={{ title: 'Import Clients', presentation: 'modal' }} />
       <Stack.Screen name="[id]" options={{ headerShown: false }} />
     </Stack>
   );

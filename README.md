@@ -34,7 +34,8 @@ client**, or ask a freelancer account to add you.
   figure to `••••••` if someone's looking over your shoulder), a 6-month revenue chart, client
   balances, today/upcoming invoices, search + overdue filter, one-tap "Send Payment Reminders."
 - **Clients** — list with outstanding totals, add new (creates a real linked account via an Edge
-  Function), per-client detail with balance and invoice history.
+  Function), per-client detail with balance and invoice history, and CSV import for migrating a
+  client list off a spreadsheet — see [`(freelancer)/clients/import.tsx`](<src/app/(freelancer)/clients/import.tsx>).
 - **Invoices** — list filterable by draft/sent/paid/overdue, detail view, payment reminders,
   recurring invoices (save a template — weekly/monthly/quarterly/yearly — and it generates a real
   invoice on schedule with no app or server needing to be open; see

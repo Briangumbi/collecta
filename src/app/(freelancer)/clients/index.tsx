@@ -3,7 +3,7 @@ import { useCallback, useMemo, useState } from 'react';
 import { Pressable, RefreshControl, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 
 import { GlowBackground } from '@/components/glow-background';
-import { IcoChevronRight, IcoSearch } from '@/components/icons';
+import { IcoChevronRight, IcoSearch, IcoUpload } from '@/components/icons';
 import { OfflineBanner } from '@/components/offline-banner';
 import { PillActionButton } from '@/components/pill-action-button';
 import { ScreenHeader } from '@/components/screen-header';
@@ -59,7 +59,17 @@ export default function ClientsScreen() {
       >
         <ScreenHeader
           title="Clients"
-          action={<PillActionButton label="Add" onPress={() => router.push('/(freelancer)/clients/new')} />}
+          action={
+            <View style={styles.headerActions}>
+              <Pressable
+                onPress={() => router.push('/(freelancer)/clients/import')}
+                style={[styles.iconButton, { backgroundColor: theme.backgroundElement, borderColor: theme.border }]}
+              >
+                <IcoUpload color={theme.textSecondary} size={16} />
+              </Pressable>
+              <PillActionButton label="Add" onPress={() => router.push('/(freelancer)/clients/new')} />
+            </View>
+          }
         />
 
         <OfflineBanner visible={isOffline} />
@@ -212,6 +222,19 @@ const styles = StyleSheet.create({
   flex: { flex: 1 },
   content: {
     paddingBottom: 130,
+  },
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  iconButton: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    borderWidth: StyleSheet.hairlineWidth,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   summaryRow: {
     flexDirection: 'row',
