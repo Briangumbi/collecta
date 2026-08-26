@@ -197,7 +197,7 @@ export default function DashboardScreen() {
                       <ThemedText style={{ fontFamily: fonts.display, fontSize: 18, color: '#FFFFFF', marginTop: 10 }}>$</ThemedText>
                       <AnimatedCounter
                         value={data?.outstandingTotal ?? 0}
-                        formatter={(n) => Math.round(n).toLocaleString()}
+                        formatter={(n) => Math.round(n).toLocaleString('en-US')}
                         type="hero"
                         style={styles.heroAmount}
                       />

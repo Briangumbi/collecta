@@ -11,7 +11,12 @@ interface AnimatedCounterProps extends ThemedTextProps {
 
 const countEasing = Easing.out(Easing.cubic);
 
-export function AnimatedCounter({ value, formatter = (n) => Math.round(n).toLocaleString(), ...rest }: AnimatedCounterProps) {
+// Locale is pinned to 'en-US' rather than left to the device default — an
+// unpinned toLocaleString() can render digits in a non-Latin numeral system
+// on some locales, which custom fonts like Outfit have no glyphs for and
+// silently render as a blank box (seen on iOS with a non-English locale,
+// not reproducible on a device already set to en-US).
+export function AnimatedCounter({ value, formatter = (n) => Math.round(n).toLocaleString('en-US'), ...rest }: AnimatedCounterProps) {
   const [display, setDisplay] = useState(0);
   const fromRef = useRef(0);
 

@@ -125,7 +125,7 @@ export default function InvoiceDetailScreen() {
           <View style={styles.heroAmountRow}>
             <ThemedText style={{ fontFamily: fonts.display, fontSize: 18, color: isPaid ? theme.success : theme.primary, marginTop: 8 }}>$</ThemedText>
             <ThemedText style={{ fontFamily: fonts.displayHeavy, fontSize: 56, letterSpacing: -1.5, color: isPaid ? theme.success : theme.primary }}>
-              {Math.round(Number(invoice.amount)).toLocaleString()}
+              {Math.round(Number(invoice.amount)).toLocaleString('en-US')}
             </ThemedText>
           </View>
 
