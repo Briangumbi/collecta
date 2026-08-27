@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { LogoMark } from '@/components/logo-mark';
 import { PrimaryButton } from '@/components/primary-button';
 import { TextField } from '@/components/text-field';
 import { ThemedText } from '@/components/themed-text';
@@ -37,6 +38,9 @@ export default function SignupScreen() {
       <SafeAreaView style={styles.flex}>
         <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.flex}>
           <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+            <View style={styles.markWrap}>
+              <LogoMark size={56} />
+            </View>
             <ThemedText type="title" style={styles.title}>
               Create account
             </ThemedText>
@@ -123,6 +127,9 @@ const styles = StyleSheet.create({
   content: {
     padding: 24,
     paddingTop: 48,
+  },
+  markWrap: {
+    marginBottom: 20,
   },
   title: {
     fontSize: 34,

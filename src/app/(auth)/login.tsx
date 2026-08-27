@@ -4,6 +4,7 @@ import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View } from 're
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { GlowBackground } from '@/components/glow-background';
+import { LogoMark } from '@/components/logo-mark';
 import { PrimaryButton } from '@/components/primary-button';
 import { TextField } from '@/components/text-field';
 import { ThemedText } from '@/components/themed-text';
@@ -42,21 +43,8 @@ export default function LoginScreen() {
         <GlowBackground width={420} height={320} cx="30%" cy="0%" r="55%" />
         <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.flex}>
           <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-            <View
-              style={[
-                styles.mark,
-                {
-                  backgroundColor: theme.primary,
-                  shadowColor: theme.primary,
-                  shadowOffset: { width: 0, height: 0 },
-                  shadowOpacity: 0.5,
-                  shadowRadius: 16,
-                },
-              ]}
-            >
-              <ThemedText type="title" themeColor="primaryText" style={styles.markLetter}>
-                L
-              </ThemedText>
+            <View style={styles.markWrap}>
+              <LogoMark size={56} />
             </View>
             <ThemedText type="title" style={styles.title}>
               Ledger
@@ -133,17 +121,8 @@ const styles = StyleSheet.create({
     padding: 24,
     paddingTop: 48,
   },
-  mark: {
-    width: 56,
-    height: 56,
-    borderRadius: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
+  markWrap: {
     marginBottom: 20,
-  },
-  markLetter: {
-    fontSize: 26,
-    lineHeight: 30,
   },
   title: {
     fontSize: 34,
