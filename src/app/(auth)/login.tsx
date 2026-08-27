@@ -47,7 +47,7 @@ export default function LoginScreen() {
               <LogoMark size={56} />
             </View>
             <ThemedText type="title" style={styles.title}>
-              Ledger
+              Collecta
             </ThemedText>
             <ThemedText type="default" themeColor="textSecondary" style={styles.subtitle}>
               Client management and billing, built for freelancers.

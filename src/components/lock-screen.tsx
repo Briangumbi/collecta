@@ -5,6 +5,7 @@ import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-na
 import { scheduleOnRN } from 'react-native-worklets';
 
 import { GlowBackground } from '@/components/glow-background';
+import { LogoMark } from '@/components/logo-mark';
 import { PrimaryButton } from '@/components/primary-button';
 import { ThemedText } from '@/components/themed-text';
 import { duration, easing } from '@/animations/easing';
@@ -79,24 +80,11 @@ export function LockScreen() {
     >
       <GlowBackground width={420} height={420} cy="38%" r="55%" />
       <View style={styles.center}>
-        <View
-          style={[
-            styles.mark,
-            {
-              backgroundColor: theme.primary,
-              shadowColor: theme.primary,
-              shadowOffset: { width: 0, height: 0 },
-              shadowOpacity: 0.5,
-              shadowRadius: 20,
-            },
-          ]}
-        >
-          <ThemedText type="title" themeColor="primaryText" style={styles.markLetter}>
-            L
-          </ThemedText>
+        <View style={styles.markWrap}>
+          <LogoMark size={72} />
         </View>
         <ThemedText type="subtitle" style={styles.title}>
-          Ledger
+          Collecta
         </ThemedText>
         <ThemedText type="default" themeColor="textSecondary" style={styles.subtitle}>
           Unlock to view your dashboard
@@ -129,17 +117,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 32,
   },
-  mark: {
-    width: 72,
-    height: 72,
-    borderRadius: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
+  markWrap: {
     marginBottom: 20,
-  },
-  markLetter: {
-    fontSize: 32,
-    lineHeight: 36,
   },
   title: {
     marginBottom: 6,

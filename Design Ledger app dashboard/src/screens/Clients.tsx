@@ -70,7 +70,7 @@ export default function Clients() {
         {/* Header */}
         <div style={{ padding: "56px 20px 20px", display: "flex", alignItems: "flex-end", justifyContent: "space-between" }}>
           <div>
-            <p style={{ fontFamily: T.fm, fontSize: 10, fontWeight: 500, letterSpacing: "0.14em", textTransform: "uppercase" as const, color: T.muted, marginBottom: 4 }}>Ledger</p>
+            <p style={{ fontFamily: T.fm, fontSize: 10, fontWeight: 500, letterSpacing: "0.14em", textTransform: "uppercase" as const, color: T.muted, marginBottom: 4 }}>Collecta</p>
             <h1 style={{ fontFamily: T.ff, fontSize: 30, fontWeight: 800, color: T.cream, lineHeight: 1.1 }}>Clients</h1>
           </div>
           <button className="pill-button" style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 16px", borderRadius: 99, border: "none", cursor: "pointer", fontFamily: T.fb, fontSize: 13, fontWeight: 600, color: T.bg }}>

@@ -57,7 +57,7 @@ export default function EnableBiometricScreen() {
             Secure your account
           </ThemedText>
           <ThemedText type="default" themeColor="textSecondary" style={styles.subtitle}>
-            Enable {label} to unlock Ledger instantly next time, without retyping your password.
+            Enable {label} to unlock Collecta instantly next time, without retyping your password.
           </ThemedText>
           {error ? (
             <ThemedText type="small" themeColor="danger" style={styles.error}>

@@ -1,5 +1,5 @@
 // expo-sqlite's web backend needs a wasm asset Metro can't resolve out of the
-// box (see expo-sqlite/web/worker.ts). Ledger targets iOS/Android; this
+// box (see expo-sqlite/web/worker.ts). Collecta targets iOS/Android; this
 // localStorage-backed swap keeps the web dev-preview usable without that setup.
 
 export async function setCached<T>(key: string, value: T): Promise<void> {

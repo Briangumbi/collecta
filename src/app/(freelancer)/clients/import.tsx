@@ -116,7 +116,7 @@ export default function ImportClientsScreen() {
               Import clients from a spreadsheet — export it as CSV first. The first row should be a
               header with <ThemedText type="smallBold">name</ThemedText> and{' '}
               <ThemedText type="smallBold">email</ThemedText> columns; any other columns are ignored.
-              A new client without a Ledger account yet gets one created automatically, same as adding
+              A new client without a Collecta account yet gets one created automatically, same as adding
               them one at a time.
             </ThemedText>
             {parseError ? (

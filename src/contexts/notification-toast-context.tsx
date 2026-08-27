@@ -25,7 +25,7 @@ export function NotificationToastProvider({ children }: { children: ReactNode })
   useEffect(() => {
     const subscription = Notifications.addNotificationReceivedListener((notification) => {
       const { title, body } = notification.request.content;
-      setToast({ id: Date.now(), title: title ?? 'Ledger', body: body ?? '' });
+      setToast({ id: Date.now(), title: title ?? 'Collecta', body: body ?? '' });
 
       if (timerRef.current) clearTimeout(timerRef.current);
       timerRef.current = setTimeout(() => setToast(null), 4000);

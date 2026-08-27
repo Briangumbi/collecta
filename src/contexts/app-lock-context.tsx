@@ -3,13 +3,13 @@ import * as SecureStore from 'expo-secure-store';
 import { createContext, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { AppState, Platform } from 'react-native';
 
-// Face ID / Touch ID has no web equivalent, and Ledger targets iOS/Android —
+// Face ID / Touch ID has no web equivalent, and Collecta targets iOS/Android —
 // this subsystem is a no-op on web rather than depending on expo-secure-store's
 // web shim.
 const BIOMETRICS_AVAILABLE = Platform.OS !== 'web';
 
-const BIOMETRIC_PREF_KEY = 'ledger.biometric_enabled';
-const BIOMETRIC_PROMPTED_KEY = 'ledger.biometric_prompted';
+const BIOMETRIC_PREF_KEY = 'collecta.biometric_enabled';
+const BIOMETRIC_PROMPTED_KEY = 'collecta.biometric_prompted';
 
 interface AppLockContextValue {
   isBiometricSupported: boolean;
@@ -90,7 +90,7 @@ export function AppLockProvider({ children }: { children: ReactNode }) {
 
   const unlock = async () => {
     const result = await LocalAuthentication.authenticateAsync({
-      promptMessage: 'Unlock Ledger',
+      promptMessage: 'Unlock Collecta',
       cancelLabel: 'Cancel',
     });
     if (result.success) {

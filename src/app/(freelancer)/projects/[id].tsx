@@ -96,7 +96,7 @@ export default function ProjectDetailScreen() {
     const permission =
       source === 'camera' ? await ImagePicker.requestCameraPermissionsAsync() : await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!permission.granted) {
-      Alert.alert('Permission needed', 'Ledger needs access to continue.');
+      Alert.alert('Permission needed', 'Collecta needs access to continue.');
       return;
     }
     const result =

@@ -45,7 +45,7 @@ export default function SignupScreen() {
               Create account
             </ThemedText>
             <ThemedText type="default" themeColor="textSecondary" style={styles.subtitle}>
-              Set up your Ledger workspace.
+              Set up your Collecta workspace.
             </ThemedText>
 
             <View style={styles.roleRow}>

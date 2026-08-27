@@ -15,7 +15,7 @@ const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const SLIDES = [
   {
     glyph: '👋',
-    title: 'Welcome to Ledger',
+    title: 'Welcome to Collecta',
     body: 'Manage clients, projects, and invoices from one place — everything in sync, in real time.',
   },
   {

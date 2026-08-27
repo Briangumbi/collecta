@@ -185,7 +185,7 @@ export default function FreelancerSettingsScreen() {
           <View style={[styles.listCard, { backgroundColor: theme.backgroundElement, borderRadius: radius.card, paddingHorizontal: 18 }]}>
             <SettingsToggleRow
               label="Biometric unlock"
-              description={isBiometricSupported ? 'Require Face ID / Touch ID to open Ledger' : 'Not available on this device'}
+              description={isBiometricSupported ? 'Require Face ID / Touch ID to open Collecta' : 'Not available on this device'}
               value={isBiometricEnabled}
               onValueChange={handleBiometricToggle}
               disabled={!isBiometricSupported}
@@ -299,7 +299,7 @@ export default function FreelancerSettingsScreen() {
         <PrimaryButton label="Log out" variant="secondary" onPress={signOut} />
 
         <ThemedText type="code" themeColor="textSecondary" style={styles.version}>
-          Ledger · {new Date().getFullYear()}
+          Collecta · {new Date().getFullYear()}
         </ThemedText>
       </ScrollView>
     </ThemedView>

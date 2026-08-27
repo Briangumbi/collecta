@@ -1,23 +1,23 @@
 {
   "expo": {
-    "name": "ledger",
-    "slug": "ledger",
+    "name": "collecta",
+    "slug": "collecta",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "ledger",
+    "scheme": "collecta",
     "userInterfaceStyle": "automatic",
     "ios": {
       "icon": "./assets/expo.icon",
-      "bundleIdentifier": "dev.ledgerapp.client",
+      "bundleIdentifier": "dev.collectaapp.client",
       "infoPlist": {
-        "NSFaceIDUsageDescription": "Ledger uses Face ID to quickly and securely unlock your dashboard.",
-        "NSCameraUsageDescription": "Ledger uses your camera to scan and attach receipts to projects.",
-        "NSPhotoLibraryUsageDescription": "Ledger lets you attach photos from your library to projects and receipts."
+        "NSFaceIDUsageDescription": "Collecta uses Face ID to quickly and securely unlock your dashboard.",
+        "NSCameraUsageDescription": "Collecta uses your camera to scan and attach receipts to projects.",
+        "NSPhotoLibraryUsageDescription": "Collecta lets you attach photos from your library to projects and receipts."
       }
     },
     "android": {
-      "package": "dev.ledgerapp.client",
+      "package": "dev.collectaapp.client",
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
@@ -51,19 +51,19 @@
       [
         "expo-camera",
         {
-          "cameraPermission": "Ledger uses your camera to scan and attach receipts to projects."
+          "cameraPermission": "Collecta uses your camera to scan and attach receipts to projects."
         }
       ],
       [
         "expo-image-picker",
         {
-          "photosPermission": "Ledger lets you attach photos from your library to projects and receipts."
+          "photosPermission": "Collecta lets you attach photos from your library to projects and receipts."
         }
       ],
       [
         "expo-local-authentication",
         {
-          "faceIDPermission": "Ledger uses Face ID to quickly and securely unlock your dashboard."
+          "faceIDPermission": "Collecta uses Face ID to quickly and securely unlock your dashboard."
         }
       ],
       [

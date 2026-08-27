@@ -25,11 +25,11 @@ export default function NewClientScreen() {
       if (result.isNewAccount && result.tempPassword) {
         Alert.alert(
           'Client added',
-          `${name.trim()} now has a Ledger account.\n\nEmail: ${email.trim()}\nTemporary password: ${result.tempPassword}\n\nShare this with them so they can log in — they can change it once signed in.`,
+          `${name.trim()} now has a Collecta account.\n\nEmail: ${email.trim()}\nTemporary password: ${result.tempPassword}\n\nShare this with them so they can log in — they can change it once signed in.`,
           [{ text: 'Done', onPress: () => router.back() }]
         );
       } else {
-        Alert.alert('Client added', `${name.trim()} already had a Ledger account and is now linked to you.`, [
+        Alert.alert('Client added', `${name.trim()} already had a Collecta account and is now linked to you.`, [
           { text: 'Done', onPress: () => router.back() },
         ]);
       }
@@ -44,7 +44,7 @@ export default function NewClientScreen() {
     <ThemedView style={styles.flex}>
       <ScrollView contentContainerStyle={styles.content}>
         <ThemedText type="small" themeColor="textSecondary" style={styles.intro}>
-          Enter your client’s details. If they don’t have a Ledger account yet, we’ll create one and give you a
+          Enter your client’s details. If they don’t have a Collecta account yet, we’ll create one and give you a
           temporary password to share with them.
         </ThemedText>
 

@@ -1,4 +1,4 @@
--- Ledger — schema, indexes, and Row Level Security policies.
+-- Collecta — schema, indexes, and Row Level Security policies.
 -- Run this in the Supabase SQL editor (or via `supabase db push`) on a fresh project.
 
 create extension if not exists "pgcrypto";

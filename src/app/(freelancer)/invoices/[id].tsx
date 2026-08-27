@@ -60,7 +60,7 @@ export default function InvoiceDetailScreen() {
     .toUpperCase();
 
   const handleMarkPaid = () => {
-    Alert.alert('Mark as paid?', 'Use this if the client paid outside Ledger (bank transfer, cash, etc).', [
+    Alert.alert('Mark as paid?', 'Use this if the client paid outside Collecta (bank transfer, cash, etc).', [
       { text: 'Cancel', style: 'cancel' },
       {
         text: 'Mark as paid',

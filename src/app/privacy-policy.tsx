@@ -9,12 +9,12 @@ export default function PrivacyPolicyScreen() {
       <ScrollView contentContainerStyle={styles.content}>
         <ThemedText type="small" themeColor="textSecondary" style={styles.draftNotice}>
           Draft — last updated {new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}.
-          This describes what Ledger actually does today; it hasn’t been reviewed by a lawyer, so have one look it
+          This describes what Collecta actually does today; it hasn’t been reviewed by a lawyer, so have one look it
           over — and update the contact details below — before relying on it for a real launch.
         </ThemedText>
 
-        <Section title="What Ledger is">
-          Ledger is a client-portal app for freelancers: manage clients, projects, invoices, and messages in one
+        <Section title="What Collecta is">
+          Collecta is a client-portal app for freelancers: manage clients, projects, invoices, and messages in one
           place. Two roles share the same app — freelancers (full management) and clients (a scoped view of their
           own projects and invoices).
         </Section>
@@ -67,7 +67,7 @@ export default function PrivacyPolicyScreen() {
         </Section>
 
         <Section title="Children">
-          Ledger is a business tool and isn’t directed at children; we don’t knowingly collect data from anyone
+          Collecta is a business tool and isn’t directed at children; we don’t knowingly collect data from anyone
           under 16.
         </Section>
 

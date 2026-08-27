@@ -4,14 +4,14 @@ import { StyleSheet, View } from 'react-native';
 import { ThemedText } from '@/components/themed-text';
 import { useThemeTokens } from '@/theme/ThemeProvider';
 
-/** "LEDGER" eyebrow + large serif title, optionally with a trailing action (e.g. an Add/New pill). */
+/** "COLLECTA" eyebrow + large serif title, optionally with a trailing action (e.g. an Add/New pill). */
 export function ScreenHeader({ title, action }: { title: string; action?: ReactNode }) {
   const { fonts } = useThemeTokens();
   return (
     <View style={styles.row}>
       <View>
         <ThemedText type="label" themeColor="textSecondary" style={styles.eyebrow}>
-          Ledger
+          Collecta
         </ThemedText>
         <ThemedText style={{ fontFamily: fonts.displayHeavy, fontSize: 30, lineHeight: 33 }}>{title}</ThemedText>
       </View>

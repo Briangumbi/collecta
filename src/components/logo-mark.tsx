@@ -1,6 +1,6 @@
 import { Image } from 'expo-image';
 
-/** The Ledger mark — the user-provided logo image, used as-is. */
+/** The Collecta mark — the user-provided logo image, used as-is. */
 export function LogoMark({ size = 56 }: { size?: number }) {
   return (
     <Image

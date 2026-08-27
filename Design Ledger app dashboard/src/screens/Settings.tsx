@@ -83,7 +83,7 @@ export default function Settings() {
       <div style={{ position: "relative", zIndex: 1 }}>
         {/* Header */}
         <div style={{ padding: "56px 20px 24px" }}>
-          <p style={{ fontFamily: T.fm, fontSize: 10, fontWeight: 500, letterSpacing: "0.14em", textTransform: "uppercase" as const, color: T.muted, marginBottom: 4 }}>Ledger</p>
+          <p style={{ fontFamily: T.fm, fontSize: 10, fontWeight: 500, letterSpacing: "0.14em", textTransform: "uppercase" as const, color: T.muted, marginBottom: 4 }}>Collecta</p>
           <h1 style={{ fontFamily: T.ff, fontSize: 30, fontWeight: 800, color: T.cream }}>Settings</h1>
         </div>
 
@@ -206,7 +206,7 @@ export default function Settings() {
         </div>
 
         {/* Version */}
-        <p style={{ textAlign: "center", fontFamily: T.fm, fontSize: 10, color: "#2d2318", padding: "16px 0" }}>Ledger v2.4.1 · © 2026</p>
+        <p style={{ textAlign: "center", fontFamily: T.fm, fontSize: 10, color: "#2d2318", padding: "16px 0" }}>Collecta v2.4.1 · © 2026</p>
       </div>
     </div>
   );

@@ -12,7 +12,7 @@ export default function TermsScreen() {
           Have a lawyer review this before relying on it for a real launch.
         </ThemedText>
 
-        <Section title="Using Ledger">
+        <Section title="Using Collecta">
           By creating an account you agree to these terms. You’re responsible for the accuracy of what you enter —
           client details, invoice amounts, project information — and for keeping your login credentials secure.
         </Section>
@@ -34,7 +34,7 @@ export default function TermsScreen() {
         </Section>
 
         <Section title="Acceptable use">
-          <Bullet>Don’t use Ledger to store or transmit anything illegal, or to harass or impersonate someone.</Bullet>
+          <Bullet>Don’t use Collecta to store or transmit anything illegal, or to harass or impersonate someone.</Bullet>
           <Bullet>Don’t attempt to access another user’s data or bypass the app’s security controls.</Bullet>
           <Bullet>Don’t use the service in a way that could disrupt it for other users.</Bullet>
         </Section>
@@ -54,7 +54,7 @@ export default function TermsScreen() {
         </Section>
 
         <Section title="No warranty">
-          Ledger is provided “as is.” We don’t guarantee it will be uninterrupted, error-free, or fit for any
+          Collecta is provided “as is.” We don’t guarantee it will be uninterrupted, error-free, or fit for any
           particular purpose — this is a portfolio/demonstration project, not a production financial service.
         </Section>
 

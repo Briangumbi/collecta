@@ -41,7 +41,7 @@ export default function PrivacyDataScreen() {
     <ThemedView style={styles.flex}>
       <ScrollView contentContainerStyle={styles.content}>
         <ThemedText type="smallBold" style={styles.sectionTitle}>
-          What Ledger stores about your business
+          What Collecta stores about your business
         </ThemedText>
         {counts ? (
           <View style={styles.countRow}>

@@ -8,7 +8,7 @@
 //
 // If the email already belongs to an existing client profile, this just
 // links that existing client to the calling freelancer instead of erroring
-// — handles "this person already has a Ledger account" gracefully.
+// — handles "this person already has a Collecta account" gracefully.
 //
 // A newly-created client gets a random temporary password, returned once in
 // the response for the freelancer to relay — there's no email delivery

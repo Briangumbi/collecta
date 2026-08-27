@@ -4,7 +4,7 @@ let dbPromise: Promise<SQLite.SQLiteDatabase> | null = null;
 
 function getDb() {
   if (!dbPromise) {
-    dbPromise = SQLite.openDatabaseAsync('ledger-cache.db').then(async (db) => {
+    dbPromise = SQLite.openDatabaseAsync('collecta-cache.db').then(async (db) => {
       await db.execAsync(
         'CREATE TABLE IF NOT EXISTS cache (key TEXT PRIMARY KEY NOT NULL, value TEXT NOT NULL, updated_at INTEGER NOT NULL);'
       );

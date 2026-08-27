@@ -74,7 +74,7 @@ export default function ClientSettingsScreen() {
         <Card style={styles.card}>
           <SettingsToggleRow
             label="Biometric unlock"
-            description={isBiometricSupported ? 'Require Face ID / Touch ID to open Ledger' : 'Not available on this device'}
+            description={isBiometricSupported ? 'Require Face ID / Touch ID to open Collecta' : 'Not available on this device'}
             value={isBiometricEnabled}
             onValueChange={handleBiometricToggle}
             disabled={!isBiometricSupported}
@@ -88,7 +88,7 @@ export default function ClientSettingsScreen() {
         </ThemedText>
         <Card style={styles.card}>
           <ThemedText type="small" themeColor="textSecondary">
-            Ledger stores your profile, plus {counts ? `${counts.projects} project${counts.projects === 1 ? '' : 's'} and ${counts.invoices} invoice${counts.invoices === 1 ? '' : 's'}` : 'your projects and invoices'} shared with your freelancer — all scoped to your account under row-level security.
+            Collecta stores your profile, plus {counts ? `${counts.projects} project${counts.projects === 1 ? '' : 's'} and ${counts.invoices} invoice${counts.invoices === 1 ? '' : 's'}` : 'your projects and invoices'} shared with your freelancer — all scoped to your account under row-level security.
           </ThemedText>
         </Card>
         <DeleteAccountSection warning="This removes your profile and message history, and removes you from your freelancer’s projects and invoices." />

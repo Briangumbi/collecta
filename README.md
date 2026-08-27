@@ -1,6 +1,6 @@
-# Ledger
+# Collecta
 
-![Ledger — Build for freelancers. Premium billing, build for trust.](docs/images/promo.png)
+![Collecta — Build for freelancers. Premium billing, build for trust.](docs/images/promo.png)
 
 A mobile client-portal app for freelancers and small agencies — manage clients, projects, invoices,
 and get paid, from one app. Two roles share the same codebase: **Freelancer** (full management view)
@@ -23,7 +23,7 @@ npx expo start
 - **Android emulator/device** — press `a` (needs Android Studio), or scan the QR with Expo Go.
 
 **Log in without creating an account**: tap **Continue as demo freelancer** on the login screen, or
-sign in directly with `demo@ledgerapp.dev` / `ledger-demo-2026` (seeded — see
+sign in directly with `demo@collectaapp.dev` / `collecta-demo-2026` (seeded — see
 [Seed demo data](#3-seed-demo-data)). To see the client-side view, sign up fresh and pick **I'm a
 client**, or ask a freelancer account to add you.
 
@@ -181,7 +181,7 @@ npx expo start
 npm run seed
 ```
 
-Creates one demo freelancer (`demo@ledgerapp.dev`), 4 fake clients, 3 projects with milestones, a
+Creates one demo freelancer (`demo@collectaapp.dev`), 4 fake clients, 3 projects with milestones, a
 message thread, and 8 invoices spread across draft/sent/paid/overdue. The app's "Continue as demo
 freelancer" login button uses this account. The seed script needs `SUPABASE_SERVICE_ROLE_KEY` (it
 bypasses RLS) — never ship that key in the app itself, only use it locally / in CI.
@@ -280,7 +280,9 @@ There's no currency conversion anywhere in the app.
 
 ## Build & distribution
 
-The project is linked to EAS (`@brian101/ledger`, `eas.json`'s `extra.eas.projectId` in `app.json`).
+The project is linked to EAS (`@brian101/ledger` — the hosted EAS project itself wasn't renamed when
+the app became Collecta, since `projectId` is what actually matters for `eas build` and stays valid
+either way; rename the EAS project slug separately if you want the dashboard URL to match too).
 Build profiles, in [`eas.json`](eas.json):
 
 | Profile | Platform | What it produces | Needs Apple signing? |
@@ -300,7 +302,9 @@ eas build --platform ios --profile preview             # real-device build — n
 
 **Latest builds** (Android APK installs directly on a device; the iOS one is simulator-only — tools
 like [Appetize.io](https://appetize.io) can run it in a browser, but it won't install on a real
-iPhone):
+iPhone). **Stale as of the Collecta rename** — both were built under the old `dev.ledgerapp.client`
+bundle identifier, so they're a different app as far as iOS/Android are concerned now; run a fresh
+build to get one under `dev.collectaapp.client`:
 
 - Android — <https://expo.dev/artifacts/eas/iFtMkpAFm_puTkeLtalCtc_fN6xIr2R-3twfJSXuSGE.apk>
 - iOS Simulator — <https://expo.dev/artifacts/eas/OPWX1jgoX6lfJjHDSrWmrW0bWbI9pe4NcQkhx_CO6Zk.tar.gz>

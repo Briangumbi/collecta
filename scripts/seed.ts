@@ -35,7 +35,7 @@ const CLIENTS = [
   { email: 'tom@heliocraft.test', name: 'Tom Delaney', company: 'Heliocraft' },
 ];
 
-const DEMO_PASSWORD = 'ledger-demo-2026';
+const DEMO_PASSWORD = 'collecta-demo-2026';
 
 async function getOrCreateUser(email: string, password: string, name: string, role: 'freelancer' | 'client') {
   const { data: existing } = await admin.auth.admin.listUsers();

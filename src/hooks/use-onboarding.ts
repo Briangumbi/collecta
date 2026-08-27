@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useEffect, useState } from 'react';
 
-const ONBOARDING_SEEN_KEY = 'ledger.onboarding_seen';
+const ONBOARDING_SEEN_KEY = 'collecta.onboarding_seen';
 
 /**
  * Device-local, one-time flag — same pattern as app-lock-context's
