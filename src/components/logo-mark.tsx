@@ -1,37 +1,31 @@
-import { LinearGradient } from 'expo-linear-gradient';
-import { StyleSheet } from 'react-native';
-import Svg, { Rect } from 'react-native-svg';
+import { StyleSheet, View } from 'react-native';
+import Svg, { Path } from 'react-native-svg';
 
-// The brand's ember gradient — same stops as the dashboard's balance card
-// and the app's promo graphic. Fixed regardless of the active UI theme
-// (Dark Cool's blue, Light's amber, etc.): a logo should read as one
-// consistent brand identity, not shift with a user's theme preference the
-// way an in-app accent chip reasonably would.
-const GRADIENT_START = '#ff7a29';
-const GRADIENT_DEEP = '#4a1c0f';
+// The brief (ledger-logo-prompt.md) called for a "paper-and-ink" mark on a
+// warm near-black ground, not a gradient — matches the app's real
+// background/text tokens rather than the hero card's amber accent, since
+// this reads as a badge/stamp, not a UI surface. Fixed regardless of the
+// active theme, same as the avatar gradient / virtual card mockup: a logo
+// shouldn't shift with a user's theme preference.
+const BACKGROUND = '#120e09';
 const GLYPH_COLOR = '#f7f0e4';
 
 /**
- * The Ledger mark — three rounded bars of decreasing width, stacked like
- * rows in a balance sheet ("ledger entries," not a letterform), on the
- * brand's orange-to-ember gradient.
+ * The Ledger mark — two flowing ink-stroke slashes, each curving into a
+ * horizontal root at its base (left root sweeps left, right root sweeps
+ * right), evoking a pen stroke rather than a letterform or a fintech-cliché
+ * checkmark/dollar sign.
  */
 export function LogoMark({ size = 56 }: { size?: number }) {
-  const glyphSize = size * 0.64;
+  const glyphSize = size * 0.66;
 
   return (
-    <LinearGradient
-      colors={[GRADIENT_START, GRADIENT_DEEP]}
-      start={{ x: 0, y: 0 }}
-      end={{ x: 1, y: 1 }}
-      style={[styles.badge, { width: size, height: size, borderRadius: size * 0.29 }]}
-    >
-      <Svg width={glyphSize} height={glyphSize} viewBox="0 0 100 100">
-        <Rect x={22} y={24} width={56} height={12} rx={6} fill={GLYPH_COLOR} />
-        <Rect x={22} y={44} width={42} height={12} rx={6} fill={GLYPH_COLOR} />
-        <Rect x={22} y={64} width={30} height={12} rx={6} fill={GLYPH_COLOR} />
+    <View style={[styles.badge, { width: size, height: size, borderRadius: size * 0.29, backgroundColor: BACKGROUND }]}>
+      <Svg width={glyphSize} height={glyphSize} viewBox="0 0 100 100" fill="none">
+        <Path d="M12 64 C 26 66 36 46 48 24" stroke={GLYPH_COLOR} strokeWidth={10} strokeLinecap="round" />
+        <Path d="M90 74 C 78 76 70 58 64 50" stroke={GLYPH_COLOR} strokeWidth={10} strokeLinecap="round" />
       </Svg>
-    </LinearGradient>
+    </View>
   );
 }
 
