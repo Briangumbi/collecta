@@ -20,6 +20,6 @@
   "exclude": [
     "node_modules",
     "supabase/functions",
-    "Design Ledger app dashboard"
+    "Design Collecta app dashboard"
   ]
 }
