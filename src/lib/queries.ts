@@ -489,8 +489,10 @@ export async function getMessages(projectId: string): Promise<Message[]> {
   return data ?? [];
 }
 
-export async function sendMessage(input: { projectId: string; senderId: string; body: string }) {
-  const { error } = await supabase.from('messages').insert({ project_id: input.projectId, sender_id: input.senderId, body: input.body });
+export async function sendMessage(input: { projectId: string; senderId: string; body: string | null; imageUrl?: string | null }) {
+  const { error } = await supabase
+    .from('messages')
+    .insert({ project_id: input.projectId, sender_id: input.senderId, body: input.body, image_url: input.imageUrl ?? null });
   if (error) throw error;
 }
 

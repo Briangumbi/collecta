@@ -1,4 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
+import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
@@ -39,6 +40,7 @@ export default function ProjectDetailScreen() {
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [sending, setSending] = useState(false);
+  const [sendingImage, setSendingImage] = useState(false);
 
   const load = async () => {
     if (!id) return;
@@ -126,6 +128,28 @@ export default function ProjectDetailScreen() {
       await sendMessage({ projectId: project.id, senderId: profile.id, body });
     } finally {
       setSending(false);
+    }
+  };
+
+  const handleAttachMessageImage = async () => {
+    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!permission.granted) {
+      Alert.alert('Permission needed', 'Collecta needs access to your photo library to attach an image.');
+      return;
+    }
+    const result = await ImagePicker.launchImageLibraryAsync({ quality: 0.7 });
+    if (result.canceled || !result.assets[0]) return;
+
+    setSendingImage(true);
+    try {
+      const asset = result.assets[0];
+      const fileName = asset.fileName ?? `chat-${Date.now()}.jpg`;
+      const imageUrl = await uploadProjectFile(project.id, asset.uri, fileName);
+      await sendMessage({ projectId: project.id, senderId: profile.id, body: null, imageUrl });
+    } catch (err) {
+      Alert.alert('Upload failed', err instanceof Error ? err.message : 'Something went wrong.');
+    } finally {
+      setSendingImage(false);
     }
   };
 
@@ -276,22 +300,27 @@ export default function ProjectDetailScreen() {
             )}
           </View>
 
-          <View style={[styles.messageInputRow, { backgroundColor: theme.backgroundElement, borderColor: theme.border, borderRadius: 14 }]}>
-            <TextInput
-              value={draft}
-              onChangeText={setDraft}
-              placeholder="Write a message..."
-              placeholderTextColor={theme.textSecondary}
-              style={{ flex: 1, fontSize: 13, color: theme.text }}
-              multiline
-            />
-            <Pressable
-              onPress={handleSend}
-              disabled={sending || !draft.trim()}
-              style={[styles.sendButton, { backgroundColor: draft.trim() ? theme.primary : theme.backgroundSelected }]}
-            >
-              <IcoSend color={draft.trim() ? theme.primaryText : theme.textSecondary} size={14} />
+          <View style={styles.messageInputOuterRow}>
+            <Pressable onPress={handleAttachMessageImage} disabled={sendingImage} hitSlop={8} style={styles.messageAttachButton}>
+              {sendingImage ? <ActivityIndicator size="small" color={theme.textSecondary} /> : <IcoClip color={theme.textSecondary} size={18} />}
             </Pressable>
+            <View style={[styles.messageInputRow, { backgroundColor: theme.backgroundElement, borderColor: theme.border, borderRadius: 14 }]}>
+              <TextInput
+                value={draft}
+                onChangeText={setDraft}
+                placeholder="Write a message..."
+                placeholderTextColor={theme.textSecondary}
+                style={{ flex: 1, fontSize: 13, color: theme.text }}
+                multiline
+              />
+              <Pressable
+                onPress={handleSend}
+                disabled={sending || !draft.trim()}
+                style={[styles.sendButton, { backgroundColor: draft.trim() ? theme.primary : theme.backgroundSelected }]}
+              >
+                <IcoSend color={draft.trim() ? theme.primaryText : theme.textSecondary} size={14} />
+              </Pressable>
+            </View>
           </View>
         </View>
       </ScrollView>
@@ -321,12 +350,20 @@ function MessageBubble({ message, mine, clientName }: { message: Message; mine: 
         style={[
           styles.bubble,
           mine ? styles.bubbleMineShape : styles.bubbleTheirsShape,
+          message.image_url ? styles.bubbleImageWrap : null,
           { backgroundColor: mine ? theme.primary : theme.backgroundSelected },
         ]}
       >
-        <ThemedText type="small" themeColor={mine ? 'primaryText' : 'text'} style={styles.bubbleText}>
-          {message.body}
-        </ThemedText>
+        {message.image_url ? <Image source={{ uri: message.image_url }} style={styles.bubbleImage} contentFit="cover" /> : null}
+        {message.body ? (
+          <ThemedText
+            type="small"
+            themeColor={mine ? 'primaryText' : 'text'}
+            style={[styles.bubbleText, message.image_url && styles.bubbleCaption]}
+          >
+            {message.body}
+          </ThemedText>
+        ) : null}
       </View>
     </View>
   );
@@ -521,7 +558,31 @@ const styles = StyleSheet.create({
   bubbleText: {
     lineHeight: 19,
   },
+  bubbleImageWrap: {
+    padding: 4,
+  },
+  bubbleImage: {
+    width: 200,
+    height: 200,
+    borderRadius: 12,
+  },
+  bubbleCaption: {
+    marginTop: 6,
+    marginHorizontal: 6,
+  },
+  messageInputOuterRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    gap: 8,
+  },
+  messageAttachButton: {
+    width: 44,
+    height: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   messageInputRow: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,

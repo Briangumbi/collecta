@@ -91,8 +91,13 @@ create table public.messages (
   id uuid primary key default gen_random_uuid(),
   project_id uuid not null references public.projects (id) on delete cascade,
   sender_id uuid not null references public.profiles (id) on delete cascade,
-  body text not null,
-  created_at timestamptz not null default now()
+  body text,
+  -- Shares the `attachments` storage bucket/policies with project
+  -- receipts/deliverables (already scoped to the project's freelancer+client) —
+  -- this just lets a message carry an image, with no separate junction row.
+  image_url text,
+  created_at timestamptz not null default now(),
+  constraint messages_body_or_image_check check (body is not null or image_url is not null)
 );
 
 create table public.attachments (

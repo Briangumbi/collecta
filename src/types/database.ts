@@ -91,7 +91,9 @@ export interface Message {
   id: string;
   project_id: string;
   sender_id: string;
-  body: string;
+  /** At least one of body/image_url is always set (see messages_body_or_image_check). */
+  body: string | null;
+  image_url: string | null;
   created_at: string;
 }
 

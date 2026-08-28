@@ -1,9 +1,13 @@
+import { Image } from 'expo-image';
+import * as ImagePicker from 'expo-image-picker';
 import { useEffect, useRef, useState } from 'react';
-import { FlatList, KeyboardAvoidingView, Platform, Pressable, StyleSheet, TextInput, View } from 'react-native';
+import { ActivityIndicator, Alert, FlatList, KeyboardAvoidingView, Platform, Pressable, StyleSheet, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { IcoClip } from '@/components/icons';
 import { ThemedText } from '@/components/themed-text';
 import { getMessages, sendMessage } from '@/lib/queries';
+import { uploadProjectFile } from '@/lib/storage';
 import { supabase } from '@/lib/supabase';
 import { useTheme } from '@/hooks/use-theme';
 import type { Message } from '@/types/database';
@@ -14,6 +18,7 @@ export function MessageThread({ projectId, currentUserId }: { projectId: string;
   const [messages, setMessages] = useState<Message[]>([]);
   const [draft, setDraft] = useState('');
   const [sending, setSending] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState(false);
   const listRef = useRef<FlatList<Message>>(null);
 
   useEffect(() => {
@@ -49,6 +54,28 @@ export function MessageThread({ projectId, currentUserId }: { projectId: string;
     }
   };
 
+  const handleAttachImage = async () => {
+    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!permission.granted) {
+      Alert.alert('Permission needed', 'Collecta needs access to your photo library to attach an image.');
+      return;
+    }
+    const result = await ImagePicker.launchImageLibraryAsync({ quality: 0.7 });
+    if (result.canceled || !result.assets[0]) return;
+
+    setUploadingImage(true);
+    try {
+      const asset = result.assets[0];
+      const fileName = asset.fileName ?? `chat-${Date.now()}.jpg`;
+      const imageUrl = await uploadProjectFile(projectId, asset.uri, fileName);
+      await sendMessage({ projectId, senderId: currentUserId, body: null, imageUrl });
+    } catch (err) {
+      Alert.alert('Upload failed', err instanceof Error ? err.message : 'Something went wrong.');
+    } finally {
+      setUploadingImage(false);
+    }
+  };
+
   return (
     <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.flex} keyboardVerticalOffset={90}>
       <FlatList
@@ -64,12 +91,16 @@ export function MessageThread({ projectId, currentUserId }: { projectId: string;
               <View
                 style={[
                   styles.bubble,
+                  item.image_url ? styles.bubbleImageWrap : null,
                   { backgroundColor: mine ? theme.primary : theme.backgroundElement, borderColor: theme.border },
                 ]}
               >
-                <ThemedText type="small" themeColor={mine ? 'primaryText' : 'text'}>
-                  {item.body}
-                </ThemedText>
+                {item.image_url ? <Image source={{ uri: item.image_url }} style={styles.bubbleImage} contentFit="cover" /> : null}
+                {item.body ? (
+                  <ThemedText type="small" themeColor={mine ? 'primaryText' : 'text'} style={item.image_url ? styles.bubbleCaption : undefined}>
+                    {item.body}
+                  </ThemedText>
+                ) : null}
               </View>
             </View>
           );
@@ -81,6 +112,9 @@ export function MessageThread({ projectId, currentUserId }: { projectId: string;
         }
       />
       <View style={[styles.inputRow, { borderTopColor: theme.border, paddingBottom: insets.bottom + 96 }]}>
+        <Pressable onPress={handleAttachImage} disabled={uploadingImage} hitSlop={8} style={styles.attachButton}>
+          {uploadingImage ? <ActivityIndicator size="small" color={theme.textSecondary} /> : <IcoClip color={theme.textSecondary} size={20} />}
+        </Pressable>
         <MessageInput value={draft} onChangeText={setDraft} onSubmit={handleSend} sending={sending} />
       </View>
     </KeyboardAvoidingView>
@@ -145,15 +179,37 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 10,
   },
+  bubbleImageWrap: {
+    padding: 4,
+  },
+  bubbleImage: {
+    width: 220,
+    height: 220,
+    borderRadius: 12,
+  },
+  bubbleCaption: {
+    marginTop: 6,
+    marginHorizontal: 6,
+  },
   empty: {
     textAlign: 'center',
     marginTop: 40,
   },
   inputRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    gap: 8,
     borderTopWidth: StyleSheet.hairlineWidth,
     padding: 12,
   },
+  attachButton: {
+    width: 44,
+    height: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   inputInnerRow: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'flex-end',
     gap: 8,
