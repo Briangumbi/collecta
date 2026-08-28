@@ -5,11 +5,12 @@ import { useAuth } from '@/contexts/auth-context';
 import { useOnboarding } from '@/hooks/use-onboarding';
 
 export default function Index() {
-  const { session, profile } = useAuth();
+  const { session, profile, isPasswordRecovery } = useAuth();
   const { isReady, isBiometricSupported, isBiometricEnabled, hasPromptedBiometric } = useAppLock();
   const { hasSeenOnboarding } = useOnboarding();
 
   if (!session) return <Redirect href="/(auth)/login" />;
+  if (isPasswordRecovery) return <Redirect href="/reset-password" />;
   if (!profile || !isReady || hasSeenOnboarding === null) return null;
 
   if (!hasSeenOnboarding) return <Redirect href="/onboarding" />;

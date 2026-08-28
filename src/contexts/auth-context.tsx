@@ -1,4 +1,5 @@
 import type { Session } from '@supabase/supabase-js';
+import * as Linking from 'expo-linking';
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 
 import { DEMO_FREELANCER_EMAIL, DEMO_FREELANCER_PASSWORD } from '@/lib/demo';
@@ -9,11 +10,32 @@ interface AuthContextValue {
   session: Session | null;
   profile: Profile | null;
   isLoading: boolean;
+  /** True once a password-recovery deep link has established a session — routing should
+   *  send the user straight to /reset-password instead of the normal post-login flow. */
+  isPasswordRecovery: boolean;
   signIn: (email: string, password: string) => Promise<{ error: string | null }>;
   signUp: (email: string, password: string, name: string, role: 'freelancer' | 'client') => Promise<{ error: string | null }>;
   signInAsDemo: () => Promise<{ error: string | null }>;
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
+  /** Supabase never reveals whether the email exists — the caller should show the same
+   *  "check your email" message regardless of the result, to avoid leaking account existence. */
+  sendPasswordReset: (email: string) => Promise<{ error: string | null }>;
+  updatePassword: (newPassword: string) => Promise<{ error: string | null }>;
+  /** Called once the new password is saved, so routing falls back to the normal post-login flow. */
+  completePasswordRecovery: () => void;
+}
+
+/** Supabase's recovery link redirects here with tokens in the URL fragment (implicit
+ *  flow — this client doesn't opt into pkce), e.g. `collecta://reset-password#access_token=…`. */
+function parseRecoveryTokens(url: string) {
+  const fragment = url.split('#')[1] ?? url.split('?')[1] ?? '';
+  const params = new URLSearchParams(fragment);
+  return {
+    accessToken: params.get('access_token'),
+    refreshToken: params.get('refresh_token'),
+    type: params.get('type'),
+  };
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -22,6 +44,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isPasswordRecovery, setIsPasswordRecovery] = useState(false);
 
   const fetchProfile = async (userId: string) => {
     const { data, error } = await supabase.from('profiles').select('*').eq('id', userId).single();
@@ -72,6 +95,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
+  useEffect(() => {
+    // detectSessionInUrl is off (see lib/supabase.ts — this app has no server to run the
+    // browser-only auto-detect against), so the recovery link's tokens are picked up here
+    // instead: whichever way the deep link arrives (cold start vs already running).
+    const handleUrl = async (url: string) => {
+      const { accessToken, refreshToken, type } = parseRecoveryTokens(url);
+      if (type !== 'recovery' || !accessToken || !refreshToken) return;
+      const { error } = await supabase.auth.setSession({ access_token: accessToken, refresh_token: refreshToken });
+      if (!error) setIsPasswordRecovery(true);
+    };
+
+    Linking.getInitialURL().then((url) => {
+      if (url) handleUrl(url);
+    });
+    const subscription = Linking.addEventListener('url', ({ url }) => handleUrl(url));
+    return () => subscription.remove();
+  }, []);
+
   const signIn = async (email: string, password: string) => {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     return { error: error?.message ?? null };
@@ -100,13 +141,41 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (session?.user.id) await fetchProfile(session.user.id);
   };
 
-  // signIn/signUp/signOut/signInAsDemo/refreshProfile close only over `session` (already a dep) and
-  // stable module-level calls, so they're intentionally left out — including them would just make
-  // `value` a new object on every render, defeating the memo.
+  const sendPasswordReset = async (email: string) => {
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: Linking.createURL('reset-password'),
+    });
+    return { error: error?.message ?? null };
+  };
+
+  const updatePassword = async (newPassword: string) => {
+    const { error } = await supabase.auth.updateUser({ password: newPassword });
+    return { error: error?.message ?? null };
+  };
+
+  const completePasswordRecovery = () => setIsPasswordRecovery(false);
+
+  // signIn/signUp/signOut/signInAsDemo/refreshProfile/sendPasswordReset/updatePassword/
+  // completePasswordRecovery close only over `session` (already a dep) and stable module-level
+  // calls, so they're intentionally left out — including them would just make `value` a new
+  // object on every render, defeating the memo.
   const value = useMemo(
-    () => ({ session, profile, isLoading, signIn, signUp, signInAsDemo, signOut, refreshProfile }),
+    () => ({
+      session,
+      profile,
+      isLoading,
+      isPasswordRecovery,
+      signIn,
+      signUp,
+      signInAsDemo,
+      signOut,
+      refreshProfile,
+      sendPasswordReset,
+      updatePassword,
+      completePasswordRecovery,
+    }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [session, profile, isLoading]
+    [session, profile, isLoading, isPasswordRecovery]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

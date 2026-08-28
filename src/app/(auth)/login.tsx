@@ -80,6 +80,14 @@ export default function LoginScreen() {
 
             <PrimaryButton label="Log in" onPress={handleSignIn} loading={loading} disabled={!email || !password} />
 
+            <View style={styles.forgotRow}>
+              <Link href="/(auth)/forgot-password">
+                <ThemedText type="small" themeColor="primary">
+                  Forgot password?
+                </ThemedText>
+              </Link>
+            </View>
+
             <View style={styles.signupRow}>
               <ThemedText type="small" themeColor="textSecondary">
                 No account?{' '}
@@ -134,6 +142,11 @@ const styles = StyleSheet.create({
   },
   error: {
     marginBottom: 12,
+  },
+  forgotRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    marginTop: 14,
   },
   signupRow: {
     flexDirection: 'row',
