@@ -11,6 +11,12 @@ Realtime). Invoice payments are **simulated** — see [Payments](#4-payments--si
 
 ## Preview the app
 
+<p align="center">
+  <img src="docs/images/preview-dashboard.png" height="300" />
+  <img src="docs/images/preview-clients.png" height="300" />
+  <img src="docs/images/preview-invoices.png" height="300" />
+</p>
+
 ```bash
 npx expo start
 ```
