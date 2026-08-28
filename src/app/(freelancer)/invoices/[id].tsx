@@ -1,5 +1,6 @@
-import { router, useLocalSearchParams } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { Ionicons } from '@expo/vector-icons';
+import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
+import { useCallback, useState } from 'react';
 import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
 import { GlowBackground } from '@/components/glow-background';
@@ -36,10 +37,15 @@ export default function InvoiceDetailScreen() {
     setLoading(false);
   };
 
-  useEffect(() => {
-    load();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [id]);
+  // Refetch on focus, not just mount — expo-router keeps this screen mounted in the
+  // background when navigating to /invoices/new for editing, so a plain useEffect
+  // wouldn't pick up the change on the way back.
+  useFocusEffect(
+    useCallback(() => {
+      load();
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [id])
+  );
 
   if (loading || !invoice || !client) {
     return (
@@ -109,6 +115,15 @@ export default function InvoiceDetailScreen() {
               {project?.title ?? 'Invoice'}
             </ThemedText>
           </View>
+          {isDraft ? (
+            <Pressable
+              onPress={() => router.push({ pathname: '/(freelancer)/invoices/new', params: { id: invoice.id } })}
+              hitSlop={8}
+              style={[styles.editButton, { backgroundColor: theme.backgroundElement, borderColor: theme.border }]}
+            >
+              <Ionicons name="create-outline" size={17} color={theme.textSecondary} />
+            </Pressable>
+          ) : null}
           <InvoiceStatusBadge status={invoice.status} />
         </View>
 
@@ -233,6 +248,14 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   backButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    borderWidth: StyleSheet.hairlineWidth,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  editButton: {
     width: 36,
     height: 36,
     borderRadius: 18,

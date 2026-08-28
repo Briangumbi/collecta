@@ -1,5 +1,5 @@
-import { router, useLocalSearchParams } from 'expo-router';
-import { useMemo, useState } from 'react';
+import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
+import { useCallback, useMemo, useState } from 'react';
 import { Pressable, RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
 
 import { GlowBackground } from '@/components/glow-background';
@@ -31,6 +31,13 @@ export default function InvoicesScreen() {
   const [filter, setFilter] = useState<InvoiceStatus | 'all'>(initialStatus ?? 'all');
 
   const { data, isLoading, isOffline, refetch } = useCachedQuery(`invoices:${freelancerId}`, () => getInvoices(freelancerId));
+
+  useFocusEffect(
+    useCallback(() => {
+      refetch();
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [])
+  );
 
   const filtered = useMemo(() => {
     const invoices = data ?? [];

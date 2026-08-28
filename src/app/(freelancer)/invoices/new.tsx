@@ -1,7 +1,7 @@
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { router } from 'expo-router';
+import { router, Stack, useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
 import { ClientPicker } from '@/components/client-picker';
 import { NumberPad } from '@/components/number-pad';
@@ -14,7 +14,7 @@ import { useTheme } from '@/hooks/use-theme';
 import { useThemeTokens } from '@/theme/ThemeProvider';
 import { CURRENCIES } from '@/constants/currencies';
 import { formatDate, getCurrencySymbol } from '@/lib/format';
-import { createInvoice, createInvoiceTemplate, getClientDetail, getClients } from '@/lib/queries';
+import { createInvoice, createInvoiceTemplate, getClientDetail, getClients, getInvoiceDetail, updateInvoice } from '@/lib/queries';
 import type { Profile, Project, RecurringInterval } from '@/types/database';
 
 const INTERVALS: { value: RecurringInterval; label: string }[] = [
@@ -25,6 +25,8 @@ const INTERVALS: { value: RecurringInterval; label: string }[] = [
 ];
 
 export default function NewInvoiceScreen() {
+  const { id } = useLocalSearchParams<{ id?: string }>();
+  const isEditMode = !!id;
   const { profile } = useAuth();
   const theme = useTheme();
   const { radius } = useThemeTokens();
@@ -42,6 +44,7 @@ export default function NewInvoiceScreen() {
   const [showStartDatePicker, setShowStartDatePicker] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [loadingInvoice, setLoadingInvoice] = useState(isEditMode);
 
   useEffect(() => {
     if (!profile) return;
@@ -57,6 +60,25 @@ export default function NewInvoiceScreen() {
     getClientDetail(selectedClientId).then((result) => setProjects(result.projects));
   }, [selectedClientId]);
 
+  // Only a draft can be edited (see updateInvoice) — a sent/paid one is guarded again
+  // here in case it changed status after the "Edit" button was shown (e.g. another tab).
+  useEffect(() => {
+    if (!id) return;
+    getInvoiceDetail(id).then(({ invoice }) => {
+      if (invoice.status !== 'draft') {
+        setError('This invoice can no longer be edited.');
+        setLoadingInvoice(false);
+        return;
+      }
+      setSelectedClientId(invoice.client_id);
+      setSelectedProjectId(invoice.project_id);
+      setAmount(String(invoice.amount));
+      setCurrency(invoice.currency);
+      if (invoice.due_date) setDueDate(new Date(invoice.due_date));
+      setLoadingInvoice(false);
+    });
+  }, [id]);
+
   const submit = async (status: 'draft' | 'sent') => {
     if (!profile || !selectedClientId) {
       setError('Choose a client first.');
@@ -70,7 +92,15 @@ export default function NewInvoiceScreen() {
     setError(null);
     setSubmitting(true);
     try {
-      if (recurring) {
+      if (isEditMode) {
+        await updateInvoice(id, {
+          clientId: selectedClientId,
+          projectId: selectedProjectId,
+          amount: numericAmount,
+          currency,
+          dueDate: dueDate.toISOString().slice(0, 10),
+        });
+      } else if (recurring) {
         await createInvoiceTemplate({
           freelancerId: profile.id,
           clientId: selectedClientId,
@@ -99,8 +129,17 @@ export default function NewInvoiceScreen() {
     }
   };
 
+  if (loadingInvoice) {
+    return (
+      <ThemedView style={styles.center}>
+        <ActivityIndicator />
+      </ThemedView>
+    );
+  }
+
   return (
     <ThemedView style={styles.flex}>
+      <Stack.Screen options={{ title: isEditMode ? 'Edit Invoice' : 'New Invoice' }} />
       <ScrollView contentContainerStyle={styles.content}>
         <ThemedText type="small" themeColor="textSecondary" style={styles.label}>
           Client
@@ -170,15 +209,17 @@ export default function NewInvoiceScreen() {
           <NumberPad value={amount} onChange={setAmount} currencySymbol={getCurrencySymbol(currency)} />
         </View>
 
-        <View style={styles.recurringRow}>
-          <View style={styles.recurringLabelWrap}>
-            <ThemedText type="default">Repeat this invoice</ThemedText>
-            <ThemedText type="small" themeColor="textSecondary">
-              Auto-generates a new invoice on schedule — good for retainers.
-            </ThemedText>
+        {!isEditMode ? (
+          <View style={styles.recurringRow}>
+            <View style={styles.recurringLabelWrap}>
+              <ThemedText type="default">Repeat this invoice</ThemedText>
+              <ThemedText type="small" themeColor="textSecondary">
+                Auto-generates a new invoice on schedule — good for retainers.
+              </ThemedText>
+            </View>
+            <ToggleSwitch value={recurring} onValueChange={setRecurring} />
           </View>
-          <ToggleSwitch value={recurring} onValueChange={setRecurring} />
-        </View>
+        ) : null}
 
         {recurring ? (
           <>
@@ -261,7 +302,9 @@ export default function NewInvoiceScreen() {
         ) : null}
 
         <View style={styles.buttonSpacer} />
-        {recurring ? (
+        {isEditMode ? (
+          <PrimaryButton label="Save changes" onPress={() => submit('draft')} loading={submitting} />
+        ) : recurring ? (
           <PrimaryButton label="Save recurring invoice" onPress={() => submit('sent')} loading={submitting} />
         ) : (
           <>
@@ -277,6 +320,7 @@ export default function NewInvoiceScreen() {
 
 const styles = StyleSheet.create({
   flex: { flex: 1 },
+  center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   content: {
     padding: 20,
     paddingBottom: 60,

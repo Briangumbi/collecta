@@ -310,6 +310,26 @@ export async function createInvoice(input: {
   if (error) throw error;
 }
 
+/**
+ * Only a draft can be edited — once sent/paid/overdue, the amount/client/due date are
+ * locked in (the client may already have seen them). The `.eq('status', 'draft')` filter
+ * is a safety net against a race (e.g. two tabs) beyond what RLS already scopes to the
+ * owning freelancer; `.select('id')` lets the caller detect a no-op update from that race.
+ */
+export async function updateInvoice(
+  id: string,
+  input: { clientId: string; projectId: string | null; amount: number; currency: string; dueDate: string | null }
+) {
+  const { data, error } = await supabase
+    .from('invoices')
+    .update({ client_id: input.clientId, project_id: input.projectId, amount: input.amount, currency: input.currency, due_date: input.dueDate })
+    .eq('id', id)
+    .eq('status', 'draft')
+    .select('id');
+  if (error) throw error;
+  if (!data || data.length === 0) throw new Error('This invoice can no longer be edited.');
+}
+
 export async function markInvoicePaidManually(id: string) {
   const { error } = await supabase.from('invoices').update({ status: 'paid', paid_at: new Date().toISOString() }).eq('id', id);
   if (error) throw error;
