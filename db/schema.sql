@@ -302,9 +302,19 @@ create policy "freelancer_clients_insert" on public.freelancer_clients
   for insert with check (freelancer_id = (select auth.uid()) and (select public.is_freelancer()));
 
 -- projects
+-- WITH CHECK also requires the client to actually be one of the freelancer's linked
+-- clients (via freelancer_clients) — ownership + role alone would let a freelancer
+-- attach a project to an arbitrary user's id, surfacing it to them under
+-- projects_select_client below despite no real relationship. Safe for every existing
+-- code path: the client picker only ever offers already-linked clients (getClients()),
+-- and create-client links freelancer_clients atomically before a client is usable at all.
 create policy "projects_all_freelancer" on public.projects
   for all using (freelancer_id = (select auth.uid()) and (select public.is_freelancer()))
-  with check (freelancer_id = (select auth.uid()) and (select public.is_freelancer()));
+  with check (
+    freelancer_id = (select auth.uid())
+    and (select public.is_freelancer())
+    and exists (select 1 from public.freelancer_clients fc where fc.freelancer_id = projects.freelancer_id and fc.client_id = projects.client_id)
+  );
 
 create policy "projects_select_client" on public.projects
   for select using (client_id = (select auth.uid()));
@@ -322,15 +332,23 @@ create policy "milestones_select_client" on public.milestones
     exists (select 1 from public.projects p where p.id = milestones.project_id and p.client_id = (select auth.uid()))
   );
 
--- invoice templates (recurring invoices)
+-- invoice templates (recurring invoices) — same client-linkage requirement as projects above
 create policy "invoice_templates_all_freelancer" on public.invoice_templates
   for all using (freelancer_id = (select auth.uid()) and (select public.is_freelancer()))
-  with check (freelancer_id = (select auth.uid()) and (select public.is_freelancer()));
+  with check (
+    freelancer_id = (select auth.uid())
+    and (select public.is_freelancer())
+    and exists (select 1 from public.freelancer_clients fc where fc.freelancer_id = invoice_templates.freelancer_id and fc.client_id = invoice_templates.client_id)
+  );
 
--- invoices
+-- invoices — same client-linkage requirement as projects above
 create policy "invoices_all_freelancer" on public.invoices
   for all using (freelancer_id = (select auth.uid()) and (select public.is_freelancer()))
-  with check (freelancer_id = (select auth.uid()) and (select public.is_freelancer()));
+  with check (
+    freelancer_id = (select auth.uid())
+    and (select public.is_freelancer())
+    and exists (select 1 from public.freelancer_clients fc where fc.freelancer_id = invoices.freelancer_id and fc.client_id = invoices.client_id)
+  );
 
 create policy "invoices_select_client" on public.invoices
   for select using (client_id = (select auth.uid()));
