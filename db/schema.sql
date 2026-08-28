@@ -160,6 +160,11 @@ create trigger on_auth_user_created
   after insert on auth.users
   for each row execute procedure public.handle_new_user();
 
+-- Trigger firing doesn't depend on the invoking role's grants, so this is
+-- safe to lock down — without it, Postgres's default PUBLIC execute grant
+-- leaves this SECURITY DEFINER function directly callable via RPC.
+revoke execute on function public.handle_new_user() from public, anon, authenticated;
+
 -- ---------------------------------------------------------------------------
 -- Activity feed triggers
 -- ---------------------------------------------------------------------------
@@ -189,6 +194,8 @@ create trigger on_invoice_status_change
   after update on public.invoices
   for each row execute procedure public.log_invoice_activity();
 
+revoke execute on function public.log_invoice_activity() from public, anon, authenticated;
+
 create function public.log_message_activity()
 returns trigger
 language plpgsql
@@ -214,6 +221,8 @@ create trigger on_message_created
   after insert on public.messages
   for each row execute procedure public.log_message_activity();
 
+revoke execute on function public.log_message_activity() from public, anon, authenticated;
+
 -- ---------------------------------------------------------------------------
 -- Row Level Security
 -- ---------------------------------------------------------------------------
@@ -231,20 +240,24 @@ alter table public.activity_events enable row level security;
 
 -- profiles: everyone can read their own row, plus the counterparties they
 -- transact with (a freelancer's clients, and vice versa); only self-update.
+-- auth.uid()/is_freelancer() calls throughout this policy section are
+-- wrapped in `(select ...)` per Supabase's RLS performance guidance — an
+-- unwrapped call gets re-evaluated per row instead of once per query. Purely
+-- a perf change; behavior is identical either way.
 create policy "profiles_select_self" on public.profiles
-  for select using (id = auth.uid());
+  for select using (id = (select auth.uid()));
 
 create policy "profiles_select_counterparty" on public.profiles
   for select using (
     exists (
       select 1 from public.freelancer_clients fc
-      where (fc.freelancer_id = auth.uid() and fc.client_id = profiles.id)
-         or (fc.client_id = auth.uid() and fc.freelancer_id = profiles.id)
+      where (fc.freelancer_id = (select auth.uid()) and fc.client_id = profiles.id)
+         or (fc.client_id = (select auth.uid()) and fc.freelancer_id = profiles.id)
     )
   );
 
 create policy "profiles_update_self" on public.profiles
-  for update using (id = auth.uid());
+  for update using (id = (select auth.uid()));
 
 -- RLS's WITH CHECK can only see the proposed new row, not compare it against
 -- the old one — so it can't stop a client-role account writing role =
@@ -269,46 +282,53 @@ as $$
   select exists (select 1 from public.profiles where id = auth.uid() and role = 'freelancer');
 $$;
 
+-- RLS policies below call this as `authenticated` (evaluating a policy
+-- requires EXECUTE on any function it references), so — unlike the definer
+-- functions above — `authenticated` keeps its grant here; only the
+-- unauthenticated `anon`/`public` default grant is removed.
+revoke execute on function public.is_freelancer() from public, anon;
+grant execute on function public.is_freelancer() to authenticated;
+
 -- freelancer_clients
 create policy "freelancer_clients_select" on public.freelancer_clients
-  for select using (freelancer_id = auth.uid() or client_id = auth.uid());
+  for select using (freelancer_id = (select auth.uid()) or client_id = (select auth.uid()));
 
 create policy "freelancer_clients_insert" on public.freelancer_clients
-  for insert with check (freelancer_id = auth.uid() and public.is_freelancer());
+  for insert with check (freelancer_id = (select auth.uid()) and (select public.is_freelancer()));
 
 -- projects
 create policy "projects_all_freelancer" on public.projects
-  for all using (freelancer_id = auth.uid() and public.is_freelancer())
-  with check (freelancer_id = auth.uid() and public.is_freelancer());
+  for all using (freelancer_id = (select auth.uid()) and (select public.is_freelancer()))
+  with check (freelancer_id = (select auth.uid()) and (select public.is_freelancer()));
 
 create policy "projects_select_client" on public.projects
-  for select using (client_id = auth.uid());
+  for select using (client_id = (select auth.uid()));
 
 -- milestones (scoped through parent project)
 create policy "milestones_all_freelancer" on public.milestones
   for all using (
-    exists (select 1 from public.projects p where p.id = milestones.project_id and p.freelancer_id = auth.uid())
+    exists (select 1 from public.projects p where p.id = milestones.project_id and p.freelancer_id = (select auth.uid()))
   ) with check (
-    exists (select 1 from public.projects p where p.id = milestones.project_id and p.freelancer_id = auth.uid())
+    exists (select 1 from public.projects p where p.id = milestones.project_id and p.freelancer_id = (select auth.uid()))
   );
 
 create policy "milestones_select_client" on public.milestones
   for select using (
-    exists (select 1 from public.projects p where p.id = milestones.project_id and p.client_id = auth.uid())
+    exists (select 1 from public.projects p where p.id = milestones.project_id and p.client_id = (select auth.uid()))
   );
 
 -- invoice templates (recurring invoices)
 create policy "invoice_templates_all_freelancer" on public.invoice_templates
-  for all using (freelancer_id = auth.uid() and public.is_freelancer())
-  with check (freelancer_id = auth.uid() and public.is_freelancer());
+  for all using (freelancer_id = (select auth.uid()) and (select public.is_freelancer()))
+  with check (freelancer_id = (select auth.uid()) and (select public.is_freelancer()));
 
 -- invoices
 create policy "invoices_all_freelancer" on public.invoices
-  for all using (freelancer_id = auth.uid() and public.is_freelancer())
-  with check (freelancer_id = auth.uid() and public.is_freelancer());
+  for all using (freelancer_id = (select auth.uid()) and (select public.is_freelancer()))
+  with check (freelancer_id = (select auth.uid()) and (select public.is_freelancer()));
 
 create policy "invoices_select_client" on public.invoices
-  for select using (client_id = auth.uid());
+  for select using (client_id = (select auth.uid()));
 
 -- messages: freelancer and client can both read; each can only insert as themself
 create policy "messages_select" on public.messages
@@ -316,42 +336,42 @@ create policy "messages_select" on public.messages
     exists (
       select 1 from public.projects p
       where p.id = messages.project_id
-        and (p.freelancer_id = auth.uid() or p.client_id = auth.uid())
+        and (p.freelancer_id = (select auth.uid()) or p.client_id = (select auth.uid()))
     )
   );
 
 create policy "messages_insert" on public.messages
   for insert with check (
-    sender_id = auth.uid()
+    sender_id = (select auth.uid())
     and exists (
       select 1 from public.projects p
       where p.id = messages.project_id
-        and (p.freelancer_id = auth.uid() or p.client_id = auth.uid())
+        and (p.freelancer_id = (select auth.uid()) or p.client_id = (select auth.uid()))
     )
   );
 
 -- attachments: freelancer manages, client can only view
 create policy "attachments_all_freelancer" on public.attachments
   for all using (
-    exists (select 1 from public.projects p where p.id = attachments.project_id and p.freelancer_id = auth.uid())
+    exists (select 1 from public.projects p where p.id = attachments.project_id and p.freelancer_id = (select auth.uid()))
   ) with check (
-    exists (select 1 from public.projects p where p.id = attachments.project_id and p.freelancer_id = auth.uid())
+    exists (select 1 from public.projects p where p.id = attachments.project_id and p.freelancer_id = (select auth.uid()))
   );
 
 create policy "attachments_select_client" on public.attachments
   for select using (
-    exists (select 1 from public.projects p where p.id = attachments.project_id and p.client_id = auth.uid())
+    exists (select 1 from public.projects p where p.id = attachments.project_id and p.client_id = (select auth.uid()))
   );
 
 -- subscriptions: freelancer only, own row
 create policy "subscriptions_all_freelancer" on public.subscriptions
-  for all using (freelancer_id = auth.uid() and public.is_freelancer())
-  with check (freelancer_id = auth.uid() and public.is_freelancer());
+  for all using (freelancer_id = (select auth.uid()) and (select public.is_freelancer()))
+  with check (freelancer_id = (select auth.uid()) and (select public.is_freelancer()));
 
 -- activity_events: freelancer only, own feed, read-only from the client app
 -- (rows are written by the SECURITY DEFINER trigger functions above)
 create policy "activity_events_select_freelancer" on public.activity_events
-  for select using (freelancer_id = auth.uid());
+  for select using (freelancer_id = (select auth.uid()));
 
 -- ---------------------------------------------------------------------------
 -- Storage — receipts and deliverables, one bucket keyed by project id
@@ -368,7 +388,7 @@ create policy "attachments_storage_select" on storage.objects
     and exists (
       select 1 from public.projects p
       where p.id::text = (storage.foldername(name))[1]
-        and (p.freelancer_id = auth.uid() or p.client_id = auth.uid())
+        and (p.freelancer_id = (select auth.uid()) or p.client_id = (select auth.uid()))
     )
   );
 
@@ -378,7 +398,7 @@ create policy "attachments_storage_insert" on storage.objects
     and exists (
       select 1 from public.projects p
       where p.id::text = (storage.foldername(name))[1]
-        and p.freelancer_id = auth.uid()
+        and p.freelancer_id = (select auth.uid())
     )
   );
 
@@ -388,7 +408,7 @@ create policy "attachments_storage_delete" on storage.objects
     and exists (
       select 1 from public.projects p
       where p.id::text = (storage.foldername(name))[1]
-        and p.freelancer_id = auth.uid()
+        and p.freelancer_id = (select auth.uid())
     )
   );
 
@@ -441,6 +461,11 @@ begin
   end loop;
 end;
 $$;
+
+-- Unlike the trigger functions above (return type `trigger`, uncallable outside
+-- a trigger), this one returns `void` and is directly callable via RPC — revoke
+-- Postgres's default PUBLIC execute grant so only pg_cron/service_role can run it.
+revoke execute on function public.generate_recurring_invoices() from public, anon, authenticated;
 
 select cron.schedule(
   'generate-recurring-invoices',

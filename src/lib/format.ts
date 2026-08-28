@@ -1,5 +1,11 @@
 export function formatCurrency(amount: number, currency = 'usd') {
-  return new Intl.NumberFormat('en-US', { style: 'currency', currency: currency.toUpperCase(), maximumFractionDigits: 0 }).format(amount);
+  const hasCents = Math.round(amount * 100) % 100 !== 0;
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: currency.toUpperCase(),
+    minimumFractionDigits: hasCents ? 2 : 0,
+    maximumFractionDigits: 2,
+  }).format(amount);
 }
 
 /** Just the symbol/prefix (e.g. "$", "€", "TSh") for a currency, for UI that renders the amount separately. */
