@@ -80,6 +80,20 @@ client**, or ask a freelancer account to add you.
   [`auth-context.tsx`](src/contexts/auth-context.tsx).
 - Push notifications, biometric unlock, offline dashboard caching (`expo-sqlite`).
 
+## Tests
+
+```bash
+npm test          # jest
+npm run test:watch
+```
+
+Covers the highest-risk pure logic: currency formatting (`format.test.ts` — see the
+[currency-rounding fix](src/lib/format.ts) this guards against), CSV import parsing
+(`csv.test.ts`), card-entry validation (`card-format.test.ts`), reminder summaries
+(`reminders.test.ts`), and the dashboard's multi-currency aggregation logic
+(`queries.test.ts`, with a mocked Supabase client). No component/screen tests yet —
+this is unit coverage for the business logic in `src/lib`, not the UI layer.
+
 ## Stack
 
 - Expo SDK 57, Expo Router (file-based navigation), TypeScript
