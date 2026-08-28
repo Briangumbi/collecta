@@ -48,6 +48,7 @@
       ],
       "expo-sqlite",
       "expo-secure-store",
+      "expo-quick-actions",
       [
         "expo-camera",
         {

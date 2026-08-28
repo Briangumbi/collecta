@@ -104,8 +104,9 @@ this is unit coverage for the business logic in `src/lib`, not the UI layer.
 - `react-native-reanimated` + `react-native-gesture-handler` — animated counters, transitions, the
   unlock → dashboard reveal, and the payment success checkmark
 - `react-native-svg` — the revenue chart (hand-rolled, not a chart library)
-- `expo-camera` / `expo-image-picker` — receipt scanning on projects
+- `expo-camera` / `expo-image-picker` — receipt scanning on projects, image attachments in messages
 - `expo-notifications` — push notifications, with an in-app foreground toast
+- `expo-quick-actions` — home-screen long-press shortcuts (New Invoice / New Client / New Project)
 
 ## Project layout
 
@@ -352,10 +353,14 @@ each entry's mode into `ZipInfo.external_attr`, or any zip step run from an actu
 - **Deliverable attachments**: the upload path (camera/library → Supabase Storage) is shared between
   receipts and deliverables; the project Files tab currently only exposes the receipt-scan flow from
   the freelancer side.
-- **Not built**: home-screen quick actions (long-press the app icon → "New Invoice") and an alternate
-  app icon picker — both real, native-only features (no web equivalent to verify against in this
-  environment) that also need assets this pass didn't have: quick actions need real deep-link wiring
-  end-to-end on a device, and an icon picker needs actual designed icon variants, not placeholders.
+- **Home-screen quick actions**: long-press the app icon → New Invoice / New Client / New Project,
+  set dynamically for a freelancer session via [`expo-quick-actions`](https://github.com/EvanBacon/expo-quick-actions)
+  (see [`_layout.tsx`](src/app/_layout.tsx)) and cleared on sign-out. Native-only — no web equivalent
+  to verify against in this environment, so this is wired but unverified beyond a `tsc`/lint pass and
+  confirming it doesn't crash on web (where it no-ops). Test on a real device or simulator dev-client
+  build before relying on it.
+- **Not built**: an alternate app icon picker — a real, native-only feature that needs actual designed
+  icon variants first, not placeholders.
 
 ## A platform quirk worth knowing
 

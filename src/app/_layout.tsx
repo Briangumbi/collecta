@@ -2,7 +2,8 @@ import '@/global.css';
 
 import { DMMono_500Medium } from '@expo-google-fonts/dm-mono';
 import { Outfit_400Regular, Outfit_600SemiBold, Outfit_700Bold, Outfit_900Black, useFonts } from '@expo-google-fonts/outfit';
-import { Stack, ThemeProvider as NavigationThemeProvider, type Theme } from 'expo-router';
+import * as QuickActions from 'expo-quick-actions';
+import { router, Stack, ThemeProvider as NavigationThemeProvider, type Href, type Theme } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect, useMemo } from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
@@ -80,7 +81,7 @@ function NavThemeBridge({ children }: { children: React.ReactNode }) {
 }
 
 function RootNavigator() {
-  const { isLoading, session } = useAuth();
+  const { isLoading, session, profile } = useAuth();
   const theme = useTheme();
 
   useEffect(() => {
@@ -90,6 +91,32 @@ function RootNavigator() {
   useEffect(() => {
     if (session?.user.id) registerForPushNotifications(session.user.id);
   }, [session?.user.id]);
+
+  // Long-press the app icon → these three "quick create" shortcuts, all self-contained
+  // screens that need no prior context (client picker/etc. built in) — set only for a
+  // freelancer, since a client has no equivalent create actions. Cleared on sign-out so a
+  // shared device doesn't keep showing the previous freelancer's shortcuts.
+  useEffect(() => {
+    if (profile?.role !== 'freelancer') {
+      QuickActions.setItems([]);
+      return;
+    }
+    QuickActions.setItems([
+      { id: 'new-invoice', title: 'New Invoice', params: { href: '/(freelancer)/invoices/new' } },
+      { id: 'new-client', title: 'New Client', params: { href: '/(freelancer)/clients/new' } },
+      { id: 'new-project', title: 'New Project', params: { href: '/(freelancer)/projects/new' } },
+    ]);
+  }, [profile?.role]);
+
+  useEffect(() => {
+    const navigateToAction = (action?: QuickActions.Action | null) => {
+      const href = action?.params?.href;
+      if (typeof href === 'string') router.push(href as Href);
+    };
+    navigateToAction(QuickActions.initial);
+    const subscription = QuickActions.addListener(navigateToAction);
+    return () => subscription.remove();
+  }, []);
 
   if (isLoading) return null;
 
