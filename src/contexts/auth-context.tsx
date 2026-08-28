@@ -26,16 +26,12 @@ interface AuthContextValue {
   completePasswordRecovery: () => void;
 }
 
-/** Supabase's recovery link redirects here with tokens in the URL fragment (implicit
- *  flow — this client doesn't opt into pkce), e.g. `collecta://reset-password#access_token=…`. */
-function parseRecoveryTokens(url: string) {
-  const fragment = url.split('#')[1] ?? url.split('?')[1] ?? '';
-  const params = new URLSearchParams(fragment);
-  return {
-    accessToken: params.get('access_token'),
-    refreshToken: params.get('refresh_token'),
-    type: params.get('type'),
-  };
+/** Supabase's recovery link redirects here with a single-use PKCE code (see the
+ *  flowType note in lib/supabase.ts), e.g. `collecta://reset-password?code=…&type=recovery`. */
+function parseRecoveryCode(url: string) {
+  const paramString = url.split('#')[1] ?? url.split('?')[1] ?? '';
+  const params = new URLSearchParams(paramString);
+  return { code: params.get('code'), type: params.get('type') };
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -97,12 +93,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     // detectSessionInUrl is off (see lib/supabase.ts — this app has no server to run the
-    // browser-only auto-detect against), so the recovery link's tokens are picked up here
+    // browser-only auto-detect against), so the recovery link's code is picked up here
     // instead: whichever way the deep link arrives (cold start vs already running).
+    // exchangeCodeForSession verifies the code against the PKCE verifier stashed locally
+    // (via the same AsyncStorage-backed `storage` the client already uses) when
+    // sendPasswordReset originally requested it — a code with no matching local verifier
+    // (e.g. replayed, or opened on a different device) is rejected server-side.
     const handleUrl = async (url: string) => {
-      const { accessToken, refreshToken, type } = parseRecoveryTokens(url);
-      if (type !== 'recovery' || !accessToken || !refreshToken) return;
-      const { error } = await supabase.auth.setSession({ access_token: accessToken, refresh_token: refreshToken });
+      const { code, type } = parseRecoveryCode(url);
+      if (type !== 'recovery' || !code) return;
+      const { error } = await supabase.auth.exchangeCodeForSession(code);
       if (!error) setIsPasswordRecovery(true);
     };
 

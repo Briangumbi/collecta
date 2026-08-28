@@ -22,5 +22,12 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     autoRefreshToken: true,
     persistSession: true,
     detectSessionInUrl: false,
+    // PKCE rather than the implicit-flow default: the password-recovery deep link
+    // (see auth-context.tsx) then carries a single-use `code` to exchange for a
+    // session, not a raw access/refresh token pair sitting in the URL — which on
+    // mobile can be intercepted by another app registered for the same URL scheme,
+    // or linger in mail-client link previews/history. Doesn't affect direct
+    // signIn/signUp calls, which never go through a redirect.
+    flowType: 'pkce',
   },
 });
